@@ -1,3 +1,9 @@
 spring:
-  application:
-    name: Register
+    application:
+      name: Register
+    config:
+        import: "optional:file:.env[.properties]"
+    datasource:
+        username: "${DB_USERNAME}"
+        password: "${DB_PASSWORD}"
+        url: "${DB_URL}"
