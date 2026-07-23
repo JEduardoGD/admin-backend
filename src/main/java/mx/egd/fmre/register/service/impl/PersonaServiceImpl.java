@@ -54,55 +54,6 @@ public class PersonaServiceImpl implements PersonaService {
         .collect(Collectors.toList());
         return PersonaMapper.map(listPersonaEntity);
     }
-
-    /*
-    @Override
-    public List<Persona> findByAnyFieldOnPersona(Persona persona) {
-        List<PersonaEntity> list = new ArrayList<>();
-        if (persona == null) {
-            return null;
-        }
-        if (persona.getIdPersona() != null) {
-            PersonaEntity personaEntity = personaRepository
-                    .findById(persona.getIdPersona()).orElse(null);
-            if(personaEntity != null) {
-                list.add(personaEntity);
-            }
-        }
-        if (persona.getNombre() != null) {
-            List<PersonaEntity> personasTemp = personaRepository
-                    .findByNombre(persona.getNombre());
-            if (personasTemp != null && personasTemp.size() > 0) {
-                list.addAll(personasTemp);
-            }
-        }
-        if (persona.getPrimerApellido() != null) {
-            List<PersonaEntity> personasTemp = personaRepository
-                    .findByPrimerApellido(persona.getPrimerApellido());
-            if (personasTemp != null && personasTemp.size() > 0) {
-                list.addAll(personasTemp);
-            }
-        }
-        if (persona.getSegundoApellido() != null) {
-            List<PersonaEntity> personasTemp = personaRepository
-                    .findBySegundoApellido(persona.getSegundoApellido());
-            if (personasTemp != null && personasTemp.size() > 0) {
-                list.addAll(personasTemp);
-            }
-        }
-        if (persona.getFecNac() != null) {
-            List<PersonaEntity> personasTemp = personaRepository
-                    .findByFecnac(persona.getFecNac());
-            if (personasTemp != null && personasTemp.size() > 0) {
-                list.addAll(personasTemp);
-            }
-        }
-        List<PersonaEntity> listPersonaEntity = list.stream()
-        .filter(new DistinctByKey<PersonaEntity>(PersonaEntity::getIdPersona)::filterByKey)
-        .collect(Collectors.toList());
-        return PersonaMapper.map(listPersonaEntity);
-    }
-    */
     
     @Override
     public Persona createNewPersona(Persona persona) {
@@ -113,6 +64,22 @@ public class PersonaServiceImpl implements PersonaService {
         PersonaEntity personaEntity = PersonaMapper.map(persona);
         PersonaEntity savedPersonaEntity = personaRepository.save(personaEntity);
         return PersonaMapper.map(savedPersonaEntity);
+    }
+    
+    @Override
+    public Persona updatePersona(Persona persona) {
+        if (persona == null) {
+            return persona;
+        }
+        PersonaEntity personaEntity = PersonaMapper.map(persona);
+        PersonaEntity savedPersonaEntity = personaRepository.save(personaEntity);
+        return PersonaMapper.map(savedPersonaEntity);
+    }
+    
+    @Override
+    public Persona findByIdPersona(int idPersona) {
+        PersonaEntity personaEntity = personaRepository.findById(idPersona).orElse(null);
+        return PersonaMapper.map(personaEntity);
     }
 }
 
