@@ -6,7 +6,7 @@ import mx.egd.fmre.register.dto.Domicilio;
 
 public interface DomicilioService {
 
-    Domicilio saveNew(Domicilio domicilio);
+    Domicilio save(Domicilio domicilio);
 
     List<Domicilio> findByIdPersona(int idPersona);
 }

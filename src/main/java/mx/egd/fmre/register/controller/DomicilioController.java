@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,22 +20,29 @@ import mx.egd.fmre.register.service.DomicilioService;
 @RequestMapping("domicilio")
 @RequiredArgsConstructor
 public class DomicilioController {
+    
+    private static final String AUTHORIZATION_STR = "Authorization";
 
     private final DomicilioService domicilioService;
 
     @PostMapping
-    public ResponseEntity<Domicilio> save(@RequestBody Domicilio domicilio) {
+    public ResponseEntity<Domicilio> save(
+            @RequestHeader(AUTHORIZATION_STR) String authorization,
+            @RequestBody Domicilio domicilio) {
         domicilio.setIdDomicilio(null);
-        Domicilio savedDomicilio = domicilioService.saveNew(domicilio);
+        Domicilio savedDomicilio = domicilioService.save(domicilio);
         return new ResponseEntity<>(savedDomicilio, HttpStatus.CREATED);
     }
 
     @PostMapping("update")
-    public ResponseEntity<Domicilio> update(@RequestBody Domicilio domicilio) {
+    public ResponseEntity<Domicilio> update(
+            @RequestHeader(AUTHORIZATION_STR) String authorization,
+            @RequestBody Domicilio domicilio) {
         if(domicilio.getIdDomicilio()== null) {
-            
+            return null;
         }
-        return new ResponseEntity<>(new Domicilio(), HttpStatus.CREATED);
+       Domicilio updatedDomicilio = domicilioService.save(domicilio);
+        return new ResponseEntity<>(updatedDomicilio, HttpStatus.CREATED);
     }
 
     @GetMapping("find_by/idpersona/{idPersona}")

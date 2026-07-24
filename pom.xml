@@ -97,6 +97,10 @@
 			<scope>provided</scope>
 		</dependency>
 		<!--/mapstruct-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-restclient</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>

@@ -19,9 +19,10 @@ import mx.egd.fmre.register.service.DomicilioService;
 public class DomicilioServiceImpl implements DomicilioService {
     
     private final DomicilioRepository domicilioRepository;
+    //private final UserinfoService userinfoService;
     
     @Override
-    public Domicilio saveNew(Domicilio domicilio) {
+    public Domicilio save(Domicilio domicilio) {
         DomicilioEntity domicilioEntity = DomicilioEntityMapper.INSTANCE.domicilioToDomicilioEntity(domicilio);
         DomicilioEntity savedDomicilioEntity = domicilioRepository.save(domicilioEntity);
         return DomicilioMapper.INSTANCE.domicilioEntityToDomicilio(savedDomicilioEntity);
