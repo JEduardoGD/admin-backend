@@ -20,7 +20,7 @@ public class SumaryObjController {
     private final DatatableService datatableService;
 
     @PostMapping
-    public ResponseEntity<DataTableResponse> get(@RequestBody QueryObj queryObj){
+    public ResponseEntity<DataTableResponse> findAllActive(@RequestBody QueryObj queryObj){
         DataTableResponse dataTableResponse = datatableService.get(queryObj);
         return new ResponseEntity<>(dataTableResponse, HttpStatus.OK);
     }
