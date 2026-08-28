@@ -1,5 +1,6 @@
 package mx.egd.fmre.register.service;
 
+import java.io.InputStream;
 import java.nio.file.Path;
 
 import org.springframework.core.io.Resource;
@@ -16,6 +17,10 @@ public interface StorageService {
     Path load(String filename);
 
     Resource loadAsResource(String filename) throws StorageException;
+
+    String getExtension(InputStream is) throws StorageException;
+
+    String getMimeType(InputStream is) throws StorageException;
 
     //void deleteAll();
 

@@ -1,5 +1,7 @@
 package mx.egd.fmre.register.controller;
 
+import java.io.IOException;
+
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -59,9 +61,17 @@ public class FileUploadController {
         if (file == null)
             return ResponseEntity.notFound().build();
 
+        String detectedType = null;
+        try {
+            detectedType = storageService.getMimeType(file.getInputStream());
+        } catch (StorageException | IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
-                .body(file);
+                .header(HttpHeaders.CONTENT_TYPE, detectedType).body(file);
     }
 
     @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })

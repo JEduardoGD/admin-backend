@@ -13,4 +13,8 @@ public class StorageException extends ServiceException {
   public StorageException(String message, Throwable cause) {
     super(message, cause);
   }
+
+  public StorageException(Throwable e) {
+      super(e);
+  }
 }
