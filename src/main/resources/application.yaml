@@ -1,5 +1,8 @@
 spring:
     frontUrl: "${FRONT_URL}"
+    files:
+        location: ${FILES_LOCATION}
+        upload_path: "${UPLOAD_PATH}"
     application:
         name: Register
     config:
