@@ -22,9 +22,15 @@ import mx.egd.fmre.register.exception.StorageException;
 import mx.egd.fmre.register.exception.StorageFileNotFoundException;
 import mx.egd.fmre.register.service.StorageService;
 import mx.egd.fmre.register.util.MimeTypesUtil;
+import mx.egd.fmre.register.util.exception.MimeTypesUtilException;
 
 @Service
 public class FileSystemStorageService implements StorageService {
+    
+    private static final String FAILED_TO_STORE_EMPTY_FILE = "Failed to store empty file.";
+    private static final String CANT_STORE_FILE_OUTSITE_DIRECTORY= "Cannot store file outside current directory.";
+    private static final String FAILED_TO_STORE_FILE = "Failed to store file.";
+    private static final String CULD_NOT_READ_FILE = "Could not read file: ";
 
     //private final Path rootLocation = Paths.get("uploaded_files");
     @Value("${spring.files.location}")
@@ -34,6 +40,8 @@ public class FileSystemStorageService implements StorageService {
     private String uploadPath;
     
     private String rootLocation;
+    
+    private static final  Tika TIKA = new Tika();
     
     @PostConstruct
     private void init() {
@@ -45,14 +53,12 @@ public class FileSystemStorageService implements StorageService {
         String fileName;
         try {
             if (file.isEmpty()) {
-                throw new StorageException("Failed to store empty file.");
+                throw new StorageException(FAILED_TO_STORE_EMPTY_FILE);
             }
             // Paths.get(file.getOriginalFilename())
             String uuid = UUID.randomUUID().toString();
-            Tika tika = new Tika();
             // Detect the MIME type (e.g., "image/jpeg")
-            String detectedType = tika.detect(file.getInputStream());
-            String extension = MimeTypesUtil.getExtension(detectedType);
+            String extension = getExtension(file.getInputStream());
             
             fileName = uuid + extension;
             
@@ -61,15 +67,37 @@ public class FileSystemStorageService implements StorageService {
             Path destinationFile = rootLocationPath.resolve(fileName).normalize().toAbsolutePath();
             if (!destinationFile.getParent().equals(rootLocationPath.toAbsolutePath())) {
                 // This is a security check
-                throw new StorageException("Cannot store file outside current directory.");
+                throw new StorageException(CANT_STORE_FILE_OUTSITE_DIRECTORY);
             }
             try (InputStream inputStream = file.getInputStream()) {
                 Files.copy(inputStream, destinationFile, StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (IOException e) {
-            throw new StorageException("Failed to store file.", e);
+            throw new StorageException(FAILED_TO_STORE_FILE, e);
         }
         return fileName;
+    }
+    
+    @Override
+    public String getExtension(InputStream is) throws StorageException {
+        String detectedType;
+        String extension;
+        try {
+            detectedType = getMimeType(is);
+            extension = MimeTypesUtil.getExtension(detectedType);
+        } catch (MimeTypesUtilException e) {
+            throw new StorageException(e);
+        }
+        return extension;
+    }
+    
+    @Override
+    public String getMimeType(InputStream is) throws StorageException {
+        try {
+            return TIKA.detect(is);
+        } catch (IOException e) {
+            throw new StorageException(e);
+        }
     }
 
     /*
@@ -98,11 +126,11 @@ public class FileSystemStorageService implements StorageService {
             if (resource.exists() || resource.isReadable()) {
                 return resource;
             } else {
-                throw new StorageFileNotFoundException("Could not read file: " + filename);
+                throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + filename);
 
             }
         } catch (MalformedURLException e) {
-            throw new StorageFileNotFoundException("Could not read file: " + filename, e);
+            throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + filename, e);
         }
     }
 

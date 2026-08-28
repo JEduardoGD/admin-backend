@@ -12,4 +12,8 @@ public class RegisterException extends Exception {
         super(message, cause);
     }
 
+    public RegisterException(Throwable e) {
+        super(e);
+    }
+
 }

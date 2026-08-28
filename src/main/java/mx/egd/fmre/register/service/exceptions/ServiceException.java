@@ -14,4 +14,8 @@ public class ServiceException extends RegisterException {
         super(message, cause);
     }
 
+    public ServiceException(Throwable e) {
+        super(e);
+    }
+
 }
