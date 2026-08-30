@@ -25,8 +25,8 @@ public class ImagenEntity {
     @JoinColumn(name = "IDPERSONA")
     private PersonaEntity persona;
 
-    @Column(name = "SHA256")
-    private String sha256;
+    @Column(name = "UUID")
+    private String uuid;
 
     @ManyToOne 
     @JoinColumn(name = "IDTIPOIMAGENDOCUMENTO")

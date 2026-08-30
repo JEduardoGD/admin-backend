@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -54,19 +55,24 @@ public class FileUploadController {
         Resource file = null;
         try {
             file = storageService.loadAsResource(filename);
+        } catch (StorageFileNotFoundException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.notFound().build();
         } catch (StorageException e) {
             log.error(e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
 
-        if (file == null)
+        if (file == null) {
             return ResponseEntity.notFound().build();
+        }
 
         String detectedType = null;
         try {
             detectedType = storageService.getMimeType(file.getInputStream());
         } catch (StorageException | IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
 
         return ResponseEntity.ok()
