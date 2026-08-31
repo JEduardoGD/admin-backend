@@ -30,7 +30,9 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",
-                    "/sumary*/**").permitAll() // Open endpoints
+                    "/static_catalog/**",
+                    "/imagen/**",
+                    "/file/**").permitAll() // Open endpoints
                 .anyRequest().authenticated() // Secure everything else
             ).oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults())); // Enable JWT validation
 
