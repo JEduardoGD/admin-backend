@@ -18,6 +18,8 @@ public interface StorageService {
 
     Resource loadAsResource(String filename) throws StorageException;
 
+    Resource loadAsResourceByUuid(String uuid) throws StorageException;
+
     String getExtension(InputStream is) throws StorageException;
 
     String getMimeType(InputStream is) throws StorageException;

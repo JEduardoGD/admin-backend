@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -121,8 +122,8 @@ public class FileSystemStorageService implements StorageService {
     @Override
     public Resource loadAsResource(String filename) throws StorageException {
         try {
-            Path file = load(filename);
-            Resource resource = new UrlResource(file.toUri());
+            Path path = load(filename);
+            Resource resource = new UrlResource(path.toUri());
             if (resource.exists() || resource.isReadable()) {
                 return resource;
             } else {
@@ -131,6 +132,71 @@ public class FileSystemStorageService implements StorageService {
             }
         } catch (MalformedURLException e) {
             throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + filename, e);
+        }
+    }
+
+    @Override
+    public Resource loadAsResourceByUuid(String uuid) throws StorageException {
+        String uuidPart = extractUuidPart(uuid);
+        Path rootLocationPath = Paths.get(this.rootLocation).toAbsolutePath().normalize();
+
+        Path requested = rootLocationPath.resolve(uuid).normalize().toAbsolutePath();
+        if (requested.getParent().equals(rootLocationPath) && isReadableFile(requested)) {
+            return toUrlResource(requested, uuid);
+        }
+
+        Path withoutExtension = rootLocationPath.resolve(uuidPart).normalize().toAbsolutePath();
+        if (withoutExtension.getParent().equals(rootLocationPath) && isReadableFile(withoutExtension)) {
+            return toUrlResource(withoutExtension, uuidPart);
+        }
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(rootLocationPath, uuidPart + ".*")) {
+            for (Path path : stream) {
+                Path normalized = path.toAbsolutePath().normalize();
+                if (normalized.getParent().equals(rootLocationPath) && isReadableFile(normalized)) {
+                    return toUrlResource(normalized, path.getFileName().toString());
+                }
+            }
+        } catch (IOException e) {
+            throw new StorageException(CULD_NOT_READ_FILE + uuid, e);
+        }
+
+        throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + uuid);
+    }
+
+    private String extractUuidPart(String uuid) throws StorageFileNotFoundException {
+        if (uuid == null || uuid.isBlank()) {
+            throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + uuid);
+        }
+        String part = uuid.trim();
+        if (part.contains("/") || part.contains("\\") || part.contains("..")) {
+            throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + uuid);
+        }
+        int dot = part.lastIndexOf('.');
+        if (dot > 0) {
+            part = part.substring(0, dot);
+        }
+        try {
+            UUID.fromString(part);
+        } catch (IllegalArgumentException e) {
+            throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + uuid, e);
+        }
+        return part;
+    }
+
+    private boolean isReadableFile(Path path) {
+        return Files.isRegularFile(path) && Files.isReadable(path);
+    }
+
+    private Resource toUrlResource(Path file, String nameForError) throws StorageException {
+        try {
+            Resource resource = new UrlResource(file.toUri());
+            if (resource.exists() && resource.isReadable()) {
+                return resource;
+            }
+            throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + nameForError);
+        } catch (MalformedURLException e) {
+            throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + nameForError, e);
         }
     }
 
