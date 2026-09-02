@@ -31,6 +31,9 @@ public class AfiliacionEntity {
     @Column(name = "FECHAFIN")
     private String fechaFin;
 
-    @Column(name = "VITALICIA")
+    @Column(name = "VITALICIA", nullable = false, columnDefinition = "TINYINT(1)")
     private boolean vitalicia;
+
+    @Column(name = "DELETED", nullable = false, columnDefinition = "TINYINT(1)")
+    private boolean deleted;
 }
