@@ -13,4 +13,5 @@ public class Afiliacion implements Serializable {
     private String fechaInicio;
     private String fechaFin;
     private boolean vitalicia;
+    private boolean deleted;
 }

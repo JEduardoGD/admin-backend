@@ -13,4 +13,11 @@ public interface AfiliacionMapper {
 
     @Mapping(source = "idPersona", target = "persona.idPersona")
     AfiliacionEntity map(Afiliacion afiliacion);
+    
+    default Integer booleanToInteger(Boolean value) {
+        if (value == null) {
+            return null;
+        }
+        return value ? 1 : 0;
+    }
 }

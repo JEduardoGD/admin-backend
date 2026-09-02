@@ -26,13 +26,15 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless APIs
             .authorizeHttpRequests(auth -> auth.requestMatchers(
-                    "/api/public/**",
-                    "/v3/api-docs/**",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/static_catalog/**",
-                    "/imagen/**",
-                    "/file/**").permitAll() // Open endpoints
+                    "/api/public/**"
+                    ,"/v3/api-docs/**"
+                    ,"/swagger-ui/**"
+                    ,"/swagger-ui.html"
+                    //,"/static_catalog/**"
+                    //,"/imagen/**"
+                    //,"/file/**"
+                    ,"/**"
+                    ).permitAll() // Open endpoints
                 .anyRequest().authenticated() // Secure everything else
             ).oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults())); // Enable JWT validation
 
