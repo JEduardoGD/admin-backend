@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -32,21 +31,6 @@ import mx.egd.fmre.register.service.StorageService;
 public class FileUploadController {
 
     private final StorageService storageService;
-
-    /*
-    @GetMapping("/")
-    public String listUploadedFiles(Model model) {
-
-        model.addAttribute("files",
-                storageService.loadAll()
-                        .map(path -> MvcUriComponentsBuilder
-                                .fromMethodName(FileUploadController.class, "serveFile", path.getFileName().toString())
-                                .build().toUri().toString())
-                        .collect(Collectors.toList()));
-
-        return "uploadForm";
-    }
-    */
 
     @GetMapping("/files/{filename:.+}")
     @ResponseBody

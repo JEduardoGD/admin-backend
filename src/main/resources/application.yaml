@@ -21,4 +21,12 @@ spring:
             naming:
                 physical-strategy: "org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl"
         show-sql: true
-
+    servlet:
+        multipart:
+            max-file-size: 15MB
+            max-request-size: 15MB
+server:
+    tomcat:
+        max-swallow-size: -1
+postalia:
+    api: "${POSTALIA_API}"
