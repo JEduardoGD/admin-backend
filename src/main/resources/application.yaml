@@ -28,3 +28,5 @@ spring:
 server:
     tomcat:
         max-swallow-size: -1
+postalia:
+    api: "${POSTALIA_API}"
