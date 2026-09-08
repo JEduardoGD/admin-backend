@@ -28,6 +28,7 @@ Default HTTP port is 8080. Swagger UI: `/swagger-ui.html`. OpenAPI: `/v3/api-doc
 - Loaded via `spring.config.import: "optional:file:.env[.properties]"` — no copies needed.
 - Keys: `DB_ROOT_PASSWORD`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_URL`, `AUTH_AUTHORITY`, `FRONT_URL`.
 - CORS origin is only `FRONT_URL` (bound as `spring.frontUrl`). Never hardcode origins; inject `@Value("${spring.frontUrl}")`.
+- If `java -version` fails or `JAVA_HOME` is unset, do not assume Java is missing. Ask the user for the JDK location (this project needs JDK 21) and `export JAVA_HOME=<that path>` before running `./mvnw`.
 
 ## Layering
 
