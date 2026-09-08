@@ -73,6 +73,13 @@ public class ImagenServiceImpl implements ImagenService {
         }
     }
 
+    @Override
+    public ImagenDto findById(int id) {
+        ImagenEntity imagenEntity = imagenRepository.findById(id).orElse(null);
+        return ImagenMapper.INSTANCE.imagenEntityToImagenDto(imagenEntity);
+    }
+    
+
     private BufferedImage readRasterImage(Resource resource, String uuid) throws ServiceException {
         try (InputStream in = resource.getInputStream()) {
             BufferedImage original = ImageIO.read(in);

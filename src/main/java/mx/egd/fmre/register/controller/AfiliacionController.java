@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import mx.egd.fmre.register.dto.Afiliacion;
 import mx.egd.fmre.register.dto.Persona;
 import mx.egd.fmre.register.service.AfiliacionService;
+import mx.egd.fmre.register.service.exceptions.AfiliacionServiceException;
 
 @RestController
 @RequestMapping("afiliacion")
@@ -25,14 +27,15 @@ public class AfiliacionController {
     private final AfiliacionService afiliacionService;
 
     @PostMapping
-    public ResponseEntity<Afiliacion> save(@RequestBody Afiliacion afiliacion) {
+    public ResponseEntity<Afiliacion> save(@RequestBody Afiliacion afiliacion) throws AfiliacionServiceException {
         afiliacion.setIdAfiliacion(null);
-        Afiliacion savedDomicilio = afiliacionService.save(afiliacion);
+        Afiliacion savedDomicilio;
+        savedDomicilio = afiliacionService.save(afiliacion);
         return new ResponseEntity<>(savedDomicilio, HttpStatus.CREATED);
     }
 
     @PutMapping
-    public ResponseEntity<Afiliacion> update(@RequestBody Afiliacion afiliacion) {
+    public ResponseEntity<Afiliacion> update(@RequestBody Afiliacion afiliacion) throws AfiliacionServiceException {
         if (afiliacion.getIdAfiliacion() == null || afiliacion.getIdAfiliacion() <= 0) {
             return ResponseEntity.badRequest().build();
         }
@@ -41,13 +44,13 @@ public class AfiliacionController {
     }
 
     @GetMapping("find_by/id_afiliacion/{idAfiliacion}")
-    public ResponseEntity<Afiliacion> findById(@PathVariable int idAfiliacion) {
+    public ResponseEntity<Afiliacion> findById(@PathVariable int idAfiliacion) throws AfiliacionServiceException {
         Afiliacion afiliacion = afiliacionService.findByIdAfiliacion(idAfiliacion);
         return new ResponseEntity<>(afiliacion, HttpStatus.CREATED);
     }
 
     @GetMapping("find_by/id_persona/{idPersona}")
-    public ResponseEntity<List<Afiliacion>> findByIdPersona(@PathVariable int idPersona) {
+    public ResponseEntity<List<Afiliacion>> findByIdPersona(@PathVariable int idPersona) throws AfiliacionServiceException {
         if (idPersona <= 0) {
             return ResponseEntity.badRequest().build();
         }
@@ -55,5 +58,10 @@ public class AfiliacionController {
         persona.setIdPersona(idPersona);
         List<Afiliacion> afiliacionList = afiliacionService.findByPersona(persona);
         return new ResponseEntity<>(afiliacionList, HttpStatus.CREATED);
+    }
+    
+    @ExceptionHandler(AfiliacionServiceException.class)
+    public ResponseEntity<String> handleUnexpected(AfiliacionServiceException ex) {
+        return ResponseEntity.internalServerError().body(ex.getMessage());
     }
 }

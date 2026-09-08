@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import mx.egd.fmre.register.record.TipoImagen;
 import mx.egd.fmre.register.service.TipoImagenService;
+import mx.egd.fmre.register.util.StaticValues;
 
 @RestController
 @RequestMapping("static_catalog")
@@ -22,4 +23,16 @@ public class StaticCatalogController {
 		List<TipoImagen> tipoImagenList = tipoImagenService.findAllActive();
         return new ResponseEntity<>(tipoImagenList, HttpStatus.OK);
 	}
+	
+    @GetMapping("tipo_imagen/for_persona")
+    public ResponseEntity<List<TipoImagen>> forPersona(){
+        List<TipoImagen> tipoImagenList = tipoImagenService.getImageTypeForGroup(StaticValues.FOR_PERSONA);
+        return new ResponseEntity<>(tipoImagenList, HttpStatus.OK);
+    }
+    
+    @GetMapping("tipo_imagen/for_afiliacion")
+    public ResponseEntity<List<TipoImagen>> forAfiliacion(){
+        List<TipoImagen> tipoImagenList = tipoImagenService.getImageTypeForGroup(StaticValues.FOR_AFILIACION);
+        return new ResponseEntity<>(tipoImagenList, HttpStatus.OK);
+    }
 }

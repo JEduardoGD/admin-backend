@@ -14,6 +14,7 @@ public class ImagenDto implements Serializable {
     private static final long serialVersionUID = 1L;
     private Integer idImagen;
     private Integer idPersona;
+    private Integer idAfiliacion;
     private String uuid;
     private Integer idTipoImagenDocumento;
 }

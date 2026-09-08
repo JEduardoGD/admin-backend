@@ -12,6 +12,7 @@ public interface ImagenMapper {
     ImagenMapper INSTANCE = Mappers.getMapper(ImagenMapper.class);
 
     @Mapping(source = "persona.idPersona", target = "idPersona")
+    @Mapping(source = "afiliacion.idAfiliacion", target = "idAfiliacion")
     @Mapping(source = "tipoImagenDocumento.idTipoImagenDocumento", target = "idTipoImagenDocumento")
     ImagenDto imagenEntityToImagenDto(ImagenEntity imagenEntity);
 }

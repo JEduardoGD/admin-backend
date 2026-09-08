@@ -12,4 +12,6 @@ public interface ImagenService {
     List<ImagenDto> findByIdPersona(int idPersona);
 
     byte[] getThumbnail(String uuid) throws ServiceException;
+
+    ImagenDto findById(int id);
 }

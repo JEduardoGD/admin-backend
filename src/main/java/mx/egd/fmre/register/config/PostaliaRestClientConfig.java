@@ -17,6 +17,7 @@ public class PostaliaRestClientConfig {
 	RestClient postaliaRestClient(RestClient.Builder builder) {
 		return builder.baseUrl("https://postalia.com.mx")
 				.defaultHeader(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", token))
-				.defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE).build();
+				.defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+				.build();
 	}
 }

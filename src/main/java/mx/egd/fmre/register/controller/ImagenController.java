@@ -46,7 +46,7 @@ public class ImagenController {
     }
 
     @GetMapping("find_by/idpersona/{idPersona}")
-    public ResponseEntity<List<ImagenDto>> findById(@PathVariable int idPersona) {
+    public ResponseEntity<List<ImagenDto>> findByIdPersona(@PathVariable int idPersona) {
         List<ImagenDto> imagenList = imagenService.findByIdPersona(idPersona);
         return new ResponseEntity<>(imagenList, HttpStatus.CREATED);
     }
@@ -71,5 +71,11 @@ public class ImagenController {
             log.error(e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @GetMapping("find_by/id/{id}")
+    public ResponseEntity<ImagenDto> findById(@PathVariable int id) {
+        ImagenDto imagenDto = imagenService.findById(id);
+        return new ResponseEntity<>(imagenDto, HttpStatus.OK);
     }
 }

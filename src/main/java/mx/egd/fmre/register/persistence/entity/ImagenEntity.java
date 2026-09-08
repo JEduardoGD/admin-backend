@@ -25,6 +25,10 @@ public class ImagenEntity {
     @JoinColumn(name = "IDPERSONA")
     private PersonaEntity persona;
 
+    @ManyToOne 
+    @JoinColumn(name = "IDAFILIACION")
+    private AfiliacionEntity afiliacion;
+
     @Column(name = "UUID")
     private String uuid;
 

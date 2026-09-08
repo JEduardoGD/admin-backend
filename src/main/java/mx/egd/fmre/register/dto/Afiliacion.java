@@ -1,6 +1,7 @@
 package mx.egd.fmre.register.dto;
 
 import java.io.Serializable;
+import java.util.Date;
 
 import lombok.Data;
 
@@ -10,8 +11,10 @@ public class Afiliacion implements Serializable {
 
     private Integer idAfiliacion;
     private Integer idPersona;
-    private String fechaInicio;
-    private String fechaFin;
+    private Date fechaInicio;
+    private Date fechaFin;
     private boolean vitalicia;
     private boolean deleted;
+    private Date modifiedAt;
+
 }
