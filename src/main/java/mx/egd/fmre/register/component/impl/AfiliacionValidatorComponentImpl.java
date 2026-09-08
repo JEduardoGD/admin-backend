@@ -20,32 +20,42 @@ import mx.egd.fmre.register.util.DateTimeUtil;
 @RequiredArgsConstructor
 public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComponent {
 
+    private static final String AFILIACION_ES_NULO = "Afiliación es nulo";
+    private static final String FECHA_INICIO_REQUERIDO = "La fecha inicio es requerido";
+    private static final String FECHA_INICIO_DEBE_SER_ANTERIOR_A_FECHA_FIN = "La fecha inicio debe ser anterior a la fecha fin";
+    private static final String FECHA_FIN_SOLO_NULO_EN_VITALICIAS = "La fecha fin solo puede ser nulo en afiliaciones vitalicias";
+    private static final String AFILIACION_NO_TIENE_ID_PERSONA = "La afiliación no tiene un IDPERSONA";
+    private static final String EXISTE_AFILIACION_VITALICIA = "Existe una afiliación vitalicia para esta persona, no se puede crear nueva afiliación";
+    private static final String FECHA_INICIAL_NO_PUEDE_SER_ANTERIOR = "La fecha inicial no puede ser anterior a la fecha inicial o fecha final de otra afiliacion vigente";
+    private static final String FECHA_FINAL_NO_PUEDE_SER_ANTERIOR = "La fecha final no puede ser anterior a la fecha inicial o fecha final de otra afiliacion vigente";
+    private static final String REGISTRO_NO_SE_PUEDE_MODIFICAR = "El registro no se puede modificar luego de 5 dias de haber sido registrado";
+
     private final AfiliacionRepository afiliacionRepository;
 
     @Override
     public String validatePeriodOnAfiliacion(Afiliacion afiliacion) {
         if (afiliacion == null) {
             log.error("Afiliacion is null");
-            return "Afiliación es nulo";
+            return AFILIACION_ES_NULO;
         }
         Date fechaInicio = afiliacion.getFechaInicio();
         Date fechaFin = afiliacion.getFechaFin();
         boolean vitalicia = afiliacion.isVitalicia();
 
         if (fechaInicio == null) {
-            return "La fecha inicio es requerido";
+            return FECHA_INICIO_REQUERIDO;
         }
 
         if (fechaInicio != null && fechaFin != null) {
             LocalDate fechaInicioLD = DateTimeUtil.toLocalDate(fechaInicio);
             LocalDate fechaFinLD = DateTimeUtil.toLocalDate(fechaFin);
             if (!fechaInicioLD.isBefore(fechaFinLD)) {
-                return "La fecha inicio debe ser anterior a la fecha fin";
+                return FECHA_INICIO_DEBE_SER_ANTERIOR_A_FECHA_FIN;
             }
         }
 
         if (fechaFin == null && !vitalicia) {
-            return "La fecha fin solo puede ser nulo en afiliaciones vitalicias";
+            return FECHA_FIN_SOLO_NULO_EN_VITALICIAS;
         }
 
         return null;
@@ -55,19 +65,19 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
     public String validateOverlaps(Afiliacion afiliacion) {
         if (afiliacion == null) {
             log.error("Afiliacion is null");
-            return "Afiliación es nulo";
+            return AFILIACION_ES_NULO;
         }
 
         Date afiliacionafiliacionFechaInicio = afiliacion.getFechaInicio();
         if (afiliacion.getIdPersona() == null) {
             log.error("La afiliación no tiene fechaInicio");
-            return "La afiliación no tiene un IDPERSONA";
+            return AFILIACION_NO_TIENE_ID_PERSONA;
         }
 
         Integer idPersona = afiliacion.getIdPersona();
         if (afiliacion.getIdPersona() == null) {
             log.error("La afiliación no tiene un IDPERSONA");
-            return "La afiliación no tiene un IDPERSONA";
+            return AFILIACION_NO_TIENE_ID_PERSONA;
         }
 
         PersonaEntity persona = new PersonaEntity();
@@ -91,7 +101,7 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
                 .orElse(null);
         if (afiliacionVitalicia != null
                 && !afiliacionVitalicia.getIdAfiliacion().equals(afiliacion.getIdAfiliacion())) {
-            return "Existe una afiliación vitalicia para esta persona, no se puede crear nueva afiliación";
+            return EXISTE_AFILIACION_VITALICIA;
         }
         
         LocalDate afiliacionFechaInicioLD = DateTimeUtil.toLocalDate(afiliacionafiliacionFechaInicio);
@@ -108,7 +118,7 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
             return afiliacionFechaInicioLD.isBefore(fechaInicioLD) || afiliacionFechaInicioLD.isBefore(fechaFinLD);
         }).count() > 0;
         if(errorOnFechaInicial) {
-            return "La fecha inicial no puede ser anterior a la fecha inicial o fecha final de otra afiliacion vigente";
+            return FECHA_INICIAL_NO_PUEDE_SER_ANTERIOR;
         }
         
         if(afiliacionFechaFinalLD != null) {
@@ -120,7 +130,7 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
                         return afiliacionFechaFinalLD.isBefore(fechaInicioLD) || afiliacionFechaFinalLD.isBefore(fechaFinLD);
                     }).count() > 0;
                     if(errorOnFechaFinal) {
-                        return "La fecha final no puede ser anterior a la fecha inicial o fecha final de otra afiliacion vigente";
+                        return FECHA_FINAL_NO_PUEDE_SER_ANTERIOR;
                     }
         }
         
@@ -133,7 +143,7 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
     public String validatePeriodForEditing(Afiliacion afiliacion) {
         if (afiliacion == null) {
             log.error("Afiliacion is null");
-            return "Afiliación es nulo";
+            return AFILIACION_ES_NULO;
         }
 
         if (afiliacion.getIdAfiliacion() == null) {
@@ -145,13 +155,13 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
         AfiliacionEntity afiliacionEntity = afiliacionRepository.findById(idAfiliacion).orElse(null);
         if (afiliacionEntity == null) {
             log.error("Afiliacion is null");
-            return "Afiliación es nulo";
+            return AFILIACION_ES_NULO;
         }
 
         long hours = DateTimeUtil.diffInHours(afiliacionEntity.getModifiedAt(), DateTimeUtil.getLocalDateTime());
 
         if (hours > (1 /** 24*/)) {
-            return "El registro no se puede modificar luego de 5 dias de haber sido registrado";
+            return REGISTRO_NO_SE_PUEDE_MODIFICAR;
         }
 
         return null;
