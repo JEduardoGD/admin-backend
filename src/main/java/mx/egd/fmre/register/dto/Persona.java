@@ -1,7 +1,7 @@
 package mx.egd.fmre.register.dto;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,5 +19,5 @@ public class Persona implements Serializable {
     private String nombre;
     private String primerApellido;
     private String segundoApellido;
-    private Date fecNac;
+    private LocalDate fecNac;
 }

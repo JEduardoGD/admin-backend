@@ -1,6 +1,6 @@
 package mx.egd.fmre.register.persistence.entity;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,5 +31,5 @@ public class PersonaEntity {
     private String segundoApellido;
 
     @Column(name = "FECNAC")
-    private Date fecNac;
+    private LocalDate fecNac;
 }
