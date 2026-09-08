@@ -1,8 +1,6 @@
 package mx.egd.fmre.register.controller;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -49,7 +47,7 @@ public class PersonaController {
         persona.setNombre(nombre != null ? nombre : null);
         persona.setPrimerApellido(primerApellido != null ? primerApellido : null);
         persona.setSegundoApellido(segundoApellido != null ? segundoApellido : null);
-        persona.setFecNac(fecnac != null ? Date.from(fecnac.atStartOfDay(ZoneId.systemDefault()).toInstant()) : null);
+        persona.setFecNac(fecnac != null ? fecnac : null);
         List<Persona> personasList = personaService.specialSearchCriterionForTheExistenceOfPersons(persona);
         return new ResponseEntity<>(personasList, HttpStatus.OK);
     }

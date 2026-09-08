@@ -1,9 +1,7 @@
 package mx.egd.fmre.register.persistence.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-
-import org.hibernate.annotations.ColumnDefault;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,9 +10,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import mx.egd.fmre.register.util.DateTimeUtil;
 
 @Entity
 @Data
@@ -31,10 +32,10 @@ public class AfiliacionEntity {
     private PersonaEntity persona;
 
     @Column(name = "FECHAINICIO")
-    private Date fechaInicio;
+    private LocalDate fechaInicio;
 
     @Column(name = "FECHAFIN")
-    private Date fechaFin;
+    private LocalDate fechaFin;
 
     @Column(name = "VITALICIA", nullable = false, columnDefinition = "TINYINT(1)")
     private boolean vitalicia;
@@ -42,7 +43,14 @@ public class AfiliacionEntity {
     @Column(name = "DELETED", nullable = false, columnDefinition = "TINYINT(1)")
     private boolean deleted;
 
-    @Column(name = "MODIFIED_AT", insertable = false, updatable = false)
-    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "MODIFIED_AT")
     private LocalDateTime modifiedAt;
+
+    @PrePersist
+    @PreUpdate
+    protected void onCreate() {
+        this.modifiedAt = DateTimeUtil.getLocalDateTime();
+    }
+    
+    
 }

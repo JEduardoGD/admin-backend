@@ -1,9 +1,6 @@
 package mx.egd.fmre.register.component.impl;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 
@@ -16,6 +13,7 @@ import mx.egd.fmre.register.dto.Afiliacion;
 import mx.egd.fmre.register.persistence.entity.AfiliacionEntity;
 import mx.egd.fmre.register.persistence.entity.PersonaEntity;
 import mx.egd.fmre.register.persistence.repository.AfiliacionRepository;
+import mx.egd.fmre.register.util.DateTimeUtil;
 
 @Component
 @Slf4j
@@ -39,8 +37,8 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
         }
 
         if (fechaInicio != null && fechaFin != null) {
-            LocalDate fechaInicioLD = fechaInicio.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            LocalDate fechaFinLD = fechaFin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            LocalDate fechaInicioLD = DateTimeUtil.toLocalDate(fechaInicio);
+            LocalDate fechaFinLD = DateTimeUtil.toLocalDate(fechaFin);
             if (!fechaInicioLD.isBefore(fechaFinLD)) {
                 return "La fecha inicio debe ser anterior a la fecha fin";
             }
@@ -96,17 +94,17 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
             return "Existe una afiliación vitalicia para esta persona, no se puede crear nueva afiliación";
         }
         
-        LocalDate afiliacionFechaInicioLD = afiliacionafiliacionFechaInicio.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate afiliacionFechaInicioLD = DateTimeUtil.toLocalDate(afiliacionafiliacionFechaInicio);
         
         Date afiliacionFechaFin = afiliacion.getFechaFin();
-        LocalDate afiliacionFechaFinalLD = afiliacionFechaFin != null ? afiliacionafiliacionFechaInicio.toInstant().atZone(ZoneId.systemDefault()).toLocalDate() : null;
+        LocalDate afiliacionFechaFinalLD = afiliacionFechaFin != null ? DateTimeUtil.toLocalDate(afiliacionafiliacionFechaInicio) : null;
         
         //validar que la nueva fecha inicio no es anterior a cualquier otra fecha inicio
         boolean errorOnFechaInicial = afiliacionesNoEliminadas.stream()
         .filter(a -> !a.getIdAfiliacion().equals(afiliacion.getIdAfiliacion()))
         .filter(a -> {
-            LocalDate fechaInicioLD = a.getFechaInicio().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            LocalDate fechaFinLD = a.getFechaFin().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            LocalDate fechaInicioLD = a.getFechaInicio();
+            LocalDate fechaFinLD = a.getFechaFin();
             return afiliacionFechaInicioLD.isBefore(fechaInicioLD) || afiliacionFechaInicioLD.isBefore(fechaFinLD);
         }).count() > 0;
         if(errorOnFechaInicial) {
@@ -117,8 +115,8 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
             boolean errorOnFechaFinal = afiliacionesNoEliminadas.stream()
                     .filter(a -> !a.getIdAfiliacion().equals(afiliacion.getIdAfiliacion()))
                     .filter(a -> {
-                        LocalDate fechaInicioLD = a.getFechaInicio().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                        LocalDate fechaFinLD = a.getFechaFin().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                        LocalDate fechaInicioLD = a.getFechaInicio();
+                        LocalDate fechaFinLD = a.getFechaFin();
                         return afiliacionFechaFinalLD.isBefore(fechaInicioLD) || afiliacionFechaFinalLD.isBefore(fechaFinLD);
                     }).count() > 0;
                     if(errorOnFechaFinal) {
@@ -150,11 +148,9 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
             return "Afiliación es nulo";
         }
 
-        LocalDateTime modifiedAt = afiliacionEntity.getModifiedAt();
+        long hours = DateTimeUtil.diffInHours(afiliacionEntity.getModifiedAt(), DateTimeUtil.getLocalDateTime());
 
-        long hours = ChronoUnit.HOURS.between(modifiedAt, LocalDateTime.now());
-
-        if (hours > (5 /* 24*/)) {
+        if (hours > (1 /** 24*/)) {
             return "El registro no se puede modificar luego de 5 dias de haber sido registrado";
         }
 

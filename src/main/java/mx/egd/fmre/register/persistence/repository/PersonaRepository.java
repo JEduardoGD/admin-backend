@@ -1,11 +1,12 @@
 package mx.egd.fmre.register.persistence.repository;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+
 import mx.egd.fmre.register.persistence.entity.PersonaEntity;
 
 public interface PersonaRepository extends JpaRepository<PersonaEntity, Integer> {
@@ -19,7 +20,7 @@ public interface PersonaRepository extends JpaRepository<PersonaEntity, Integer>
     List<PersonaEntity> findBySegundoApellido(String segundoApellido);
     
     @Query("SELECT p FROM PersonaEntity p WHERE p.fecNac = ?1")
-    List<PersonaEntity> findByFecnac(Date fecnac);
+    List<PersonaEntity> findByFecnac(LocalDate fecnac);
     
     @Query("""
             SELECT p FROM PersonaEntity p WHERE 
