@@ -1,5 +1,10 @@
 package mx.egd.fmre.register.persistence.entity;
 
+import java.time.LocalDateTime;
+import java.util.Date;
+
+import org.hibernate.annotations.ColumnDefault;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -26,14 +31,18 @@ public class AfiliacionEntity {
     private PersonaEntity persona;
 
     @Column(name = "FECHAINICIO")
-    private String fechaInicio;
+    private Date fechaInicio;
 
     @Column(name = "FECHAFIN")
-    private String fechaFin;
+    private Date fechaFin;
 
     @Column(name = "VITALICIA", nullable = false, columnDefinition = "TINYINT(1)")
     private boolean vitalicia;
 
     @Column(name = "DELETED", nullable = false, columnDefinition = "TINYINT(1)")
     private boolean deleted;
+
+    @Column(name = "MODIFIED_AT", insertable = false, updatable = false)
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    private LocalDateTime modifiedAt;
 }

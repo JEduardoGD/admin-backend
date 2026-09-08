@@ -8,4 +8,7 @@ public interface TipoImagenService {
 
 	List<TipoImagen> findAllActive();
 
+    List<TipoImagen> getImageTypeForGroup(int tipo);
+
+
 }
