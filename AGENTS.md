@@ -59,14 +59,15 @@ src/main/java/mx/egd/fmre/register/
 ├── record/                        # TipoImagen, UserInfo, OpenIdConfiguration, UploadResult
 ├── service/ + service/impl/
 ├── service/exceptions/            # AddressServiceException, AfiliacionServiceException, ServiceException
-└── util/                          # DateTimeUtil, MimeTypesUtil, StaticValues, DistinctByKey
+├── util/                          # DateTimeUtil, MimeTypesUtil, StaticValues, DistinctByKey
+└── util/exception/                # UtilException, MimeTypesUtilException
 ```
 
 ## Security
 
 `SecurityConfig` currently `permitAll`s `/**` (JWT resource server is still configured). CSRF is disabled. CORS allows GET/POST/PUT/DELETE/OPTIONS with `Authorization`, `Cache-Control`, `Content-Type`, and `allowCredentials`.
 
-Intended public prefixes (commented matchers in `SecurityConfig`): `/api/public/**`, swagger, `/static_catalog/**`, `/imagen/**`, `/file/**`. There is no `/api` prefix on existing controllers. Paths are resource names at the root (`/persona`, `/domicilio`, `/afiliacion`, `/sumary`, `/static_catalog/...`, `/file`, `/imagen`, `/address`).
+Active public matchers: `/api/public/**`, `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html`, plus the catch-all `/**`. Intended-but-currently-commented matchers: `/static_catalog/**`, `/imagen/**`, `/file/**`. There is no `/api` prefix on existing controllers. Paths are resource names at the root (`/persona`, `/domicilio`, `/afiliacion`, `/sumary`, `/static_catalog/...`, `/file`, `/imagen`, `/address`).
 
 New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list in `SecurityConfig` the same way `/static_catalog/**` was added. Do not rely on the current `/**` permitAll remaining.
 
@@ -142,4 +143,5 @@ Prefer MapStruct for new mappings.
 - Domain names and DB columns are Spanish (`primerApellido`, `entidadFederativa`, `fecNac`, `idEstado`). Keep that vocabulary; do not rename to English. `estado` here is a Mexican federative entity (`C_ESTADO`), not a workflow status.
 - Image-type groups live in `StaticValues` (`FOR_PERSONA` / `FOR_AFILIACION` and the `PERSONAL_FOTO`…`SOLICITUD` ids). Reuse those constants; do not scatter magic numbers.
 - Listing goes through `PersonaRepository.searchByTerm` and `DatatableServiceImpl`.
-- Tests live under `src/test/java/mx/egd/fmre/register`. There is no testcontainers / security test setup yet; `RegisterApplicationTests` needs a running MySQL and a valid `.env`.
+- `dto/AfiliacionError.java.txt` is a disabled draft — it does not compile; do not treat it as a live DTO.
+- Tests live under `src/test/java/mx/egd/fmre/register` and use the Boot 4 modular starters `spring-boot-starter-data-jpa-test` and `spring-boot-starter-webmvc-test` (no `spring-boot-starter-test`). There is no testcontainers / security test setup yet; `RegisterApplicationTests` needs a running MySQL and a valid `.env`.
