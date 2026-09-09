@@ -46,4 +46,10 @@ public class StaticCatalogController {
         List<Estado> estadoList = estadoService.getEstadoList();
         return new ResponseEntity<>(estadoList, HttpStatus.OK);
     }
+    
+    @GetMapping("estado/{idEstado}")
+    public ResponseEntity<Estado> byIdEstado(Integer idEstado){
+        Estado estadoList = estadoService.getEstadoByIdEstado(idEstado);
+        return new ResponseEntity<>(estadoList, HttpStatus.OK);
+    }
 }

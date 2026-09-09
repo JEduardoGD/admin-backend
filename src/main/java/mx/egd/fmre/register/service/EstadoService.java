@@ -8,4 +8,6 @@ public interface EstadoService {
 
     List<Estado> getEstadoList();
 
+    Estado getEstadoByIdEstado(Integer idEstado);
+
 }
