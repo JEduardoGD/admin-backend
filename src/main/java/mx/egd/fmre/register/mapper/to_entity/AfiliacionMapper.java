@@ -12,6 +12,7 @@ public interface AfiliacionMapper {
     AfiliacionMapper INSTANCE = Mappers.getMapper(AfiliacionMapper.class);
 
     @Mapping(source = "idPersona", target = "persona.idPersona")
+    @Mapping(source = "idEstado", target = "estado.idEstado")
     AfiliacionEntity map(Afiliacion afiliacion);
     
     default Integer booleanToInteger(Boolean value) {
