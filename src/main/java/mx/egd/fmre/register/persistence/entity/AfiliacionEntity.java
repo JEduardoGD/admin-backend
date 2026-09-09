@@ -1,5 +1,6 @@
 package mx.egd.fmre.register.persistence.entity;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -21,7 +22,9 @@ import mx.egd.fmre.register.util.DateTimeUtil;
 @Data
 @NoArgsConstructor
 @Table(name = "T_AFILIACION")
-public class AfiliacionEntity {
+public class AfiliacionEntity implements Serializable {
+    private static final long serialVersionUID = 2302012202772999884L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "IDAFILIACION")
@@ -30,6 +33,10 @@ public class AfiliacionEntity {
     @ManyToOne 
     @JoinColumn(name = "IDPERSONA")
     private PersonaEntity persona;
+
+    @ManyToOne 
+    @JoinColumn(name = "IDESTADO")
+    private EstadoEntity estado;
 
     @Column(name = "FECHAINICIO")
     private LocalDate fechaInicio;

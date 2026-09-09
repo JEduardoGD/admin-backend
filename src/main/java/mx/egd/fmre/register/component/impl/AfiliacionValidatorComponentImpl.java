@@ -160,7 +160,7 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
 
         long hours = DateTimeUtil.diffInHours(afiliacionEntity.getModifiedAt(), DateTimeUtil.getLocalDateTime());
 
-        if (hours > (1 /** 24*/)) {
+        if (hours > (5 * 24)) {
             return REGISTRO_NO_SE_PUEDE_MODIFICAR;
         }
 

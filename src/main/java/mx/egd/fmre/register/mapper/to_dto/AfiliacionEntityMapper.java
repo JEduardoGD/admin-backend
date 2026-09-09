@@ -12,6 +12,7 @@ public interface AfiliacionEntityMapper {
     AfiliacionEntityMapper INSTANCE = Mappers.getMapper(AfiliacionEntityMapper.class);
     
     @Mapping(source="persona.idPersona", target = "idPersona")
+    @Mapping(source="estado.idEstado", target = "idEstado")
     Afiliacion map(AfiliacionEntity afiliacionEntity);
 
 }

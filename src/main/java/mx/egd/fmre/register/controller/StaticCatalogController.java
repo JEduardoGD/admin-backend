@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
+import mx.egd.fmre.register.dto.Estado;
 import mx.egd.fmre.register.record.TipoImagen;
+import mx.egd.fmre.register.service.EstadoService;
 import mx.egd.fmre.register.service.TipoImagenService;
 import mx.egd.fmre.register.util.StaticValues;
 
@@ -17,7 +19,10 @@ import mx.egd.fmre.register.util.StaticValues;
 @RequestMapping("static_catalog")
 @RequiredArgsConstructor
 public class StaticCatalogController {
+    
 	private final TipoImagenService tipoImagenService;
+	private final EstadoService estadoService;
+	
 	@GetMapping("tipo_imagen")
     public ResponseEntity<List<TipoImagen>> listAll(){
 		List<TipoImagen> tipoImagenList = tipoImagenService.findAllActive();
@@ -34,5 +39,17 @@ public class StaticCatalogController {
     public ResponseEntity<List<TipoImagen>> forAfiliacion(){
         List<TipoImagen> tipoImagenList = tipoImagenService.getImageTypeForGroup(StaticValues.FOR_AFILIACION);
         return new ResponseEntity<>(tipoImagenList, HttpStatus.OK);
+    }
+    
+    @GetMapping("estado")
+    public ResponseEntity<List<Estado>> estado(){
+        List<Estado> estadoList = estadoService.getEstadoList();
+        return new ResponseEntity<>(estadoList, HttpStatus.OK);
+    }
+    
+    @GetMapping("estado/{idEstado}")
+    public ResponseEntity<Estado> byIdEstado(Integer idEstado){
+        Estado estadoList = estadoService.getEstadoByIdEstado(idEstado);
+        return new ResponseEntity<>(estadoList, HttpStatus.OK);
     }
 }

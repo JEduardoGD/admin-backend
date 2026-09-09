@@ -11,6 +11,7 @@ public class Afiliacion implements Serializable {
 
     private Integer idAfiliacion;
     private Integer idPersona;
+    private Integer idEstado;
     private Date fechaInicio;
     private Date fechaFin;
     private boolean vitalicia;
