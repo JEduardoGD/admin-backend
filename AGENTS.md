@@ -51,7 +51,7 @@ src/main/java/mx/egd/fmre/register/
 ├── dto/datatable/                 # DataTables protocol (QueryObj, DataTableResponse, DatatableObj)
 ├── dto/postalia/                  # Postalia JSON (Localizacion, Colonia)
 ├── exception/                     # storage / image / generic web exceptions
-├── mapper/                        # PersonaMapper (manual); EstadoMapper (MapStruct)
+├── mapper/                        # PersonaMapper (manual); EstadoMapper, TipoAfiliacionEntityMapper (MapStruct)
 ├── mapper/to_dto/                 # MapStruct entity → DTO/record
 ├── mapper/to_entity/              # MapStruct DTO → entity
 ├── persistence/entity/            # JPA entities
@@ -67,7 +67,7 @@ src/main/java/mx/egd/fmre/register/
 
 `SecurityConfig` currently `permitAll`s `/**` (JWT resource server is still configured). CSRF is disabled. CORS allows GET/POST/PUT/DELETE/OPTIONS with `Authorization`, `Cache-Control`, `Content-Type`, and `allowCredentials`.
 
-Active public matchers: `/api/public/**`, `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html`, plus the catch-all `/**`. Intended-but-currently-commented matchers: `/static_catalog/**`, `/imagen/**`, `/file/**`. There is no `/api` prefix on existing controllers. Paths are resource names at the root (`/persona`, `/domicilio`, `/afiliacion`, `/sumary`, `/static_catalog/...`, `/file`, `/imagen`, `/address`).
+Active public matchers: `/api/public/**`, `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html`, plus the catch-all `/**`. Intended-but-currently-commented matchers: `/static_catalog/**`, `/imagen/**`, `/file/**`. There is no `/api` prefix on existing controllers. Paths are resource names at the root (`/persona`, `/domicilio`, `/afiliacion`, `/datocontacto`, `/sumary`, `/static_catalog/...`, `/file`, `/imagen`, `/address`).
 
 New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list in `SecurityConfig` the same way `/static_catalog/**` was added. Do not rely on the current `/**` permitAll remaining.
 
@@ -86,6 +86,10 @@ New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list
 | PUT | `/afiliacion` | Update; 400 if `idAfiliacion` is missing or `<= 0` |
 | GET | `/afiliacion/find_by/id_afiliacion/{idAfiliacion}` | By id |
 | GET | `/afiliacion/find_by/id_persona/{idPersona}` | List by person; 400 if `idPersona <= 0` |
+| POST | `/datocontacto` | Create; controller nulls `idDatoContacto` |
+| PUT | `/datocontacto` | Update; 400 if `idDatoContacto` is missing or `<= 0` |
+| GET | `/datocontacto/find_by/id/{idDatoContacto}` | By id; 404 if not found |
+| GET | `/datocontacto/find_by/idpersona/{idPersona}` | List by person; 400 if `idPersona <= 0` |
 | POST | `/imagen` | Create; controller nulls `idImagen`. Metadata only — file bytes go through `/file` |
 | POST | `/imagen/update` | Update; returns `null` if `idImagen` is missing |
 | GET | `/imagen/find_by/idpersona/{idPersona}` | List by person |
@@ -100,6 +104,8 @@ New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list
 | GET | `/static_catalog/tipo_imagen/for_afiliacion` | Types for afiliación (`StaticValues.FOR_AFILIACION`) |
 | GET | `/static_catalog/estado` | All Mexican states (`C_ESTADO`) |
 | GET | `/static_catalog/estado/{idEstado}` | One state by id |
+| GET | `/static_catalog/tipo_afiliacion` | Affiliation types (`C_TIPOAFILIACION`) as `TipoAfiliacion` DTOs |
+| GET | `/static_catalog/tipo_datocontacto` | Contact-data types (`C_TIPODATOCONTACTO`) as `TipoDatoContacto` DTOs |
 
 `UserinfoService` can resolve an email from a bearer token via Cognito `userinfo_endpoint`. It is not wired into controllers yet.
 
@@ -112,7 +118,7 @@ New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list
 - Table naming: `C_*` catalogs, `T_*` transactional. Schema name `db_register`.
 - Mapped entities: `T_PERSONA`, `T_DOMICILIO`, `T_IMAGEN`, `T_AFILIACION`, `T_DATOCONTACTO`, `C_TIPOIMAGENDOCUMENTO`, `C_ESTADO`, `C_TIPODATOCONTACTO`, `C_TIPOAFILIACION`.
 - SQL also defines `T_ASPIRANTE`, `T_AFICIONADO` with **no** JPA mapping yet (`T_RADIOAFICIONADO` was replaced by `T_AFICIONADO`, which links `T_PERSONA` and a required `T_IMAGEN`).
-- `T_AFILIACION` requires `IDPERSONA`, `IDESTADO`, and `IDTIPOAFILIACION` (FK to `C_TIPOAFILIACION`, seeded 1–3: AFICIONADO / ASPIRANTE / EXTRANJERO); `T_ASPIRANTE` gained `IDESTADO` + `CONTADORESTADO` — neither is exposed via DTOs/mappers yet.
+- `T_AFILIACION` requires `IDPERSONA`, `IDESTADO`, and `IDTIPOAFILIACION` (FK to `C_TIPOAFILIACION`, seeded 1–3: AFICIONADO / ASPIRANTE / EXTRANJERO). `idTipoAfiliacion` is exposed on the `Afiliacion` DTO and mapped via nested `@Mapping` both directions. `T_ASPIRANTE` gained `IDESTADO` + `CONTADORESTADO` — still not exposed via DTOs/mappers.
 - IDs: `T_PERSONA` / `T_DOMICILIO` / `T_IMAGEN` / `T_AFILIACION` / `T_DATOCONTACTO` use `IDENTITY`. `C_TIPOIMAGENDOCUMENTO` PK is not auto-increment in SQL; the entity currently uses `GenerationType.TABLE`. `C_ESTADO`, `C_TIPOAFILIACION`, and `C_TIPODATOCONTACTO` PKs are not auto-increment in SQL (seed-only catalogs — do not insert from the app); the mapped `C_ESTADO` / `C_TIPODATOCONTACTO` / `C_TIPOAFILIACION` entities use `GenerationType.IDENTITY`.
 - `C_TIPODATOCONTACTO` is `INT` PK + `TIPOCONTACTO` / `DESCRIPCION` (seeded EMAIL / MOVIL / FIJO); `T_DATOCONTACTO.IDTIPODATOCONTACTO` is now `INT` referencing it.
 - `T_IMAGEN` links optionally to `T_PERSONA` and/or `T_AFILIACION`, plus required `C_TIPOIMAGENDOCUMENTO`. File bytes live on disk keyed by `UUID`, not in the row.
@@ -134,7 +140,7 @@ Keep those checks in the component; do not copy them into the controller.
 
 Prefer MapStruct for new mappings.
 
-- **MapStruct**: interfaces in `mapper/to_dto` or `mapper/to_entity` (exception: `EstadoMapper` lives in `mapper/` next to the legacy persona mapper). `INSTANCE = Mappers.getMapper(...)`, `@Mapping` for nested ids (e.g. `persona.idPersona` ↔ `idPersona`, `estado.idEstado` ↔ `idEstado`). After editing a mapper interface, run `./mvnw compile` to regenerate `*Impl` under `target/generated-sources/annotations`.
+- **MapStruct**: interfaces in `mapper/to_dto` or `mapper/to_entity` (exceptions: `EstadoMapper` and `TipoAfiliacionEntityMapper` live in `mapper/` next to the legacy persona mapper). `INSTANCE = Mappers.getMapper(...)`, `@Mapping` for nested ids (e.g. `persona.idPersona` ↔ `idPersona`, `estado.idEstado` ↔ `idEstado`, `tipoAfiliacion.idTipoAfiliacion` ↔ `idTipoAfiliacion`). After editing a mapper interface, run `./mvnw compile` to regenerate `*Impl` under `target/generated-sources/annotations`.
 - **Manual** (legacy): `PersonaMapper` abstract class with static methods. Do not extend this style.
 
 `maven-compiler-plugin` `annotationProcessorPaths` lists **lombok then** `mapstruct-processor`. Keep that order. If you add processors, include Lombok as well (`lombok` before `mapstruct-processor`) or Maven compile will skip Lombok.

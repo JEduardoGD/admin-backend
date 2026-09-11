@@ -14,5 +14,5 @@ public interface ImagenMapper {
     @Mapping(source = "persona.idPersona", target = "idPersona")
     @Mapping(source = "afiliacion.idAfiliacion", target = "idAfiliacion")
     @Mapping(source = "tipoImagenDocumento.idTipoImagenDocumento", target = "idTipoImagenDocumento")
-    ImagenDto imagenEntityToImagenDto(ImagenEntity imagenEntity);
+    ImagenDto map(ImagenEntity imagenEntity);
 }
