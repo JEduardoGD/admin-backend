@@ -6,7 +6,7 @@ Instructions for agents working in this repository. Do not duplicate the README.
 
 - Spring Boot 4.1.0, Java 21, Maven wrapper (Apache Maven 3.9.16)
 - Single-module Maven artifact `mx.egd.fmre:Register`, root package `mx.egd.fmre.register`
-- MySQL 8.0 via Docker Compose (`compose.yaml`), JDBC driver `mysql-connector-java` 8.0.33
+- MySQL 8.0 via Docker Compose (`db/compose.yaml`), JDBC driver `mysql-connector-java` 8.0.33
 - OAuth2 JWT resource server (AWS Cognito) — still wired; see Security
 - Lombok, MapStruct 1.6.3, springdoc-openapi 2.8.3, spring-boot-devtools
 - Apache Tika 3.0.0 (MIME detection), Thumbnailator 0.4.21 (JPEG thumbnails)
@@ -15,7 +15,7 @@ Instructions for agents working in this repository. Do not duplicate the README.
 ## Developer commands
 
 ```bash
-docker compose up -d           # start MySQL (required before run)
+docker compose -f db/compose.yaml --env-file ./.env up -d   # start MySQL (run from repo root; required before run)
 ./mvnw spring-boot:run         # dev server (devtools hot-restart on classpath changes)
 ./mvnw compile                 # regenerate MapStruct impls after mapper changes
 ./mvnw test                    # all tests (currently only RegisterApplicationTests context-loads)
@@ -105,15 +105,18 @@ New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list
 
 ## Persistence
 
+- All database definitions live in `./db` (schema SQL, catalog seed SQL, Workbench model, Docker Compose).
 - Hibernate `PhysicalNamingStrategyStandardImpl` — `@Column` / `@Table` names are taken literally (uppercase, no snake_case conversion). Match the MySQL identifiers.
 - Schema is **not** auto-created (`spring.jpa.hibernate.ddl-auto` is unset). Apply `db/db_register.sql` to the MySQL from Compose.
-- Catalog seed: `db/C_TIPOIMAGENDOCUMENTO_*.sql`, `db/C_ESTADO_*.sql`. Workbench model: `db/BDAFILIACION.mwb`.
+- Catalog seeds: `db/C_TIPOIMAGENDOCUMENTO_*.sql`, `db/C_ESTADO_*.sql`, `db/C_TIPOAFILIACION_*.sql`, `db/C_TIPODATOCONTACTO_*.sql`. Workbench model: `db/BDAFILIACION.mwb`.
 - Table naming: `C_*` catalogs, `T_*` transactional. Schema name `db_register`.
-- Mapped entities: `T_PERSONA`, `T_DOMICILIO`, `T_IMAGEN`, `T_AFILIACION`, `C_TIPOIMAGENDOCUMENTO`, `C_ESTADO`.
-- SQL also defines `T_DATOCONTACTO`, `C_TIPODATOCONTACTO`, `T_RADIOAFICIONADO`, `T_ASPIRANTE` with **no** JPA mapping yet.
-- IDs: `T_PERSONA` / `T_DOMICILIO` / `T_IMAGEN` / `T_AFILIACION` use `IDENTITY`. `C_TIPOIMAGENDOCUMENTO` PK is not auto-increment in SQL; the entity currently uses `GenerationType.TABLE`. `C_ESTADO` PK is not auto-increment in SQL (seeded 1–32); the entity currently uses `GenerationType.IDENTITY` — treat the catalog as seed-only, do not insert from the app.
+- Mapped entities: `T_PERSONA`, `T_DOMICILIO`, `T_IMAGEN`, `T_AFILIACION`, `T_DATOCONTACTO`, `C_TIPOIMAGENDOCUMENTO`, `C_ESTADO`, `C_TIPODATOCONTACTO`, `C_TIPOAFILIACION`.
+- SQL also defines `T_ASPIRANTE`, `T_AFICIONADO` with **no** JPA mapping yet (`T_RADIOAFICIONADO` was replaced by `T_AFICIONADO`, which links `T_PERSONA` and a required `T_IMAGEN`).
+- `T_AFILIACION` requires `IDPERSONA`, `IDESTADO`, and `IDTIPOAFILIACION` (FK to `C_TIPOAFILIACION`, seeded 1–3: AFICIONADO / ASPIRANTE / EXTRANJERO); `T_ASPIRANTE` gained `IDESTADO` + `CONTADORESTADO` — neither is exposed via DTOs/mappers yet.
+- IDs: `T_PERSONA` / `T_DOMICILIO` / `T_IMAGEN` / `T_AFILIACION` / `T_DATOCONTACTO` use `IDENTITY`. `C_TIPOIMAGENDOCUMENTO` PK is not auto-increment in SQL; the entity currently uses `GenerationType.TABLE`. `C_ESTADO`, `C_TIPOAFILIACION`, and `C_TIPODATOCONTACTO` PKs are not auto-increment in SQL (seed-only catalogs — do not insert from the app); the mapped `C_ESTADO` / `C_TIPODATOCONTACTO` / `C_TIPOAFILIACION` entities use `GenerationType.IDENTITY`.
+- `C_TIPODATOCONTACTO` is `INT` PK + `TIPOCONTACTO` / `DESCRIPCION` (seeded EMAIL / MOVIL / FIJO); `T_DATOCONTACTO.IDTIPODATOCONTACTO` is now `INT` referencing it.
 - `T_IMAGEN` links optionally to `T_PERSONA` and/or `T_AFILIACION`, plus required `C_TIPOIMAGENDOCUMENTO`. File bytes live on disk keyed by `UUID`, not in the row.
-- `T_AFILIACION` requires `IDPERSONA` and `IDESTADO`. `VITALICIA` / `DELETED` are `TINYINT`. `MODIFIED_AT` is set in `@PrePersist` / `@PreUpdate`.
+- `T_AFILIACION` requires `IDPERSONA` and `IDESTADO` (and `IDTIPOAFILIACION` in SQL). `VITALICIA` / `DELETED` are `TINYINT`. `MODIFIED_AT` is set in `@PrePersist` / `@PreUpdate`.
 
 ## Afiliación rules
 

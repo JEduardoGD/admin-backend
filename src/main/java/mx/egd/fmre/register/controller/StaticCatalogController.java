@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import mx.egd.fmre.register.dto.Estado;
+import mx.egd.fmre.register.persistence.entity.TipoAfiliacionEntity;
+import mx.egd.fmre.register.persistence.repository.TipoAfiliacionRepository;
 import mx.egd.fmre.register.record.TipoImagen;
 import mx.egd.fmre.register.service.EstadoService;
 import mx.egd.fmre.register.service.TipoImagenService;
@@ -22,6 +24,7 @@ public class StaticCatalogController {
     
 	private final TipoImagenService tipoImagenService;
 	private final EstadoService estadoService;
+	private final TipoAfiliacionRepository tipoAfiliacionRepository;
 	
 	@GetMapping("tipo_imagen")
     public ResponseEntity<List<TipoImagen>> listAll(){
@@ -51,5 +54,11 @@ public class StaticCatalogController {
     public ResponseEntity<Estado> byIdEstado(Integer idEstado){
         Estado estadoList = estadoService.getEstadoByIdEstado(idEstado);
         return new ResponseEntity<>(estadoList, HttpStatus.OK);
+    }
+    
+    @GetMapping("tipo_afiliacion")
+    public ResponseEntity<List<TipoAfiliacionEntity>> tipoAfiliacion(){
+        List<TipoAfiliacionEntity> tipoAfiliacionList = tipoAfiliacionRepository.findAll();
+        return new ResponseEntity<>(tipoAfiliacionList, HttpStatus.OK);
     }
 }
