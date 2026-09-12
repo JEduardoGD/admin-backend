@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -56,4 +57,14 @@ public class DatoContactoController {
         List<DatoContacto> datoContactoList = datoContactoService.findByIdPersona(idPersona);
         return new ResponseEntity<>(datoContactoList, HttpStatus.OK);
     }
+    
+    @DeleteMapping("{idDatoContacto}")
+    public ResponseEntity<DatoContacto> deleteByIdDatoContacto(@PathVariable int idDatoContacto) {
+        if (idDatoContacto <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
+        DatoContacto datoContacto = datoContactoService.delete(idDatoContacto);
+        return new ResponseEntity<>(datoContacto, HttpStatus.OK);
+    }
+    
 }

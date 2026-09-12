@@ -11,4 +11,6 @@ public interface DatoContactoService {
     DatoContacto findById(int idDatoContacto);
 
     List<DatoContacto> findByIdPersona(int idPersona);
+
+    DatoContacto delete(int idDatoContacto);
 }
