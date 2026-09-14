@@ -18,7 +18,7 @@ import mx.egd.fmre.register.service.TipoAfiliacionService;
 public class TipoAfiliacionServiceImpl implements TipoAfiliacionService {
 
     private final TipoAfiliacionRepository tipoAfiliacionRepository;
-
+    
     @Override
     public List<TipoAfiliacion> findAll() {
         List<TipoAfiliacionEntity> tipoAfiliacionList = tipoAfiliacionRepository.findAll();

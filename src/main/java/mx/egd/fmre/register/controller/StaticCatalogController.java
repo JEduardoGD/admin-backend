@@ -24,10 +24,10 @@ import mx.egd.fmre.register.util.StaticValues;
 @RequiredArgsConstructor
 public class StaticCatalogController {
     
-	private final TipoImagenService tipoImagenService;
-	private final EstadoService estadoService;
-   private final TipoAfiliacionService tipoAfiliacionService;
-	private final TipoDatoContactoService tipoDatoContactoService;
+    private final TipoImagenService tipoImagenService;
+    private final EstadoService estadoService;
+    private final TipoAfiliacionService tipoAfiliacionService;
+    private final TipoDatoContactoService tipoDatoContactoService;
 	
 	@GetMapping("tipo_imagen")
     public ResponseEntity<List<TipoImagen>> listAll(){

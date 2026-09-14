@@ -1,5 +1,6 @@
 package mx.egd.fmre.register.service.impl;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,4 +59,48 @@ public class AfiliacionServiceImpl implements AfiliacionService   {
         List<AfiliacionEntity> afiliacionEntity = afiliacionRepository.findByPersona(personaEntity);
         return afiliacionEntity.stream().map(a-> AfiliacionEntityMapper.INSTANCE.map(a)).collect(Collectors.toList());
     }
+
+    @Override
+    public Afiliacion findActiveByPersona(Persona persona) throws AfiliacionServiceException {
+        PersonaEntity personaEntity = new PersonaEntity();
+        personaEntity.setIdPersona(persona.getIdPersona());
+        List<AfiliacionEntity> afiliacionEntityList = afiliacionRepository.findByPersona(personaEntity);
+        AfiliacionEntity afiliacionEntity = afiliacionEntityList.stream()
+                .filter(a -> !a.isDeleted())
+                .filter(a -> {
+                   if(a.isVitalicia()) {
+                       return true;
+                   } else {
+                       LocalDate ld = LocalDate.now();
+                       if((a.getFechaInicio().isBefore(ld) && ld.isBefore(a.getFechaFin())) || a.getFechaInicio().equals(ld)) {
+                           return true;
+                       }
+                   }
+                   return false;
+                })
+                .findFirst()
+                .orElse(null);
+        return AfiliacionEntityMapper.INSTANCE.map(afiliacionEntity);
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

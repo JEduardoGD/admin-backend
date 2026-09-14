@@ -33,4 +33,8 @@ INSERT INTO db_register.C_ESTADO (IDESTADO,ABREVIADO,NOMBRE) VALUES
 	 (30,'VER','VERACRUZ');
 INSERT INTO db_register.C_ESTADO (IDESTADO,ABREVIADO,NOMBRE) VALUES
 	 (31,'YUC','YUCATÁN'),
-	 (32,'ZAC','ZACATECAS');
+	 (32,'ZAC','ZACATECAS'),
+	 (34,'VIT', 'Vitalicios'),
+	 (35,'ARARM','ararm'),
+	 (36,'UNAM','UNAM'),
+	 (37,'IPN','Politecnico');

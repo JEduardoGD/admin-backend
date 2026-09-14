@@ -74,6 +74,19 @@ public class ImagenServiceImpl implements ImagenService {
     }
 
     @Override
+    public byte[] get(String uuid) throws ServiceException {
+        Resource resource = storageService.loadAsResourceByUuid(uuid);
+        BufferedImage original = readRasterImage(resource, uuid);
+        String[] arrName = uuid.split("\\.");
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            ImageIO.write(original, arrName[1].toLowerCase(), out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new StorageException("Failed to create thumbnail for: " + uuid, e);
+        }
+    }
+
+    @Override
     public ImagenDto findById(int id) {
         ImagenEntity imagenEntity = imagenRepository.findById(id).orElse(null);
         return ImagenMapper.INSTANCE.map(imagenEntity);

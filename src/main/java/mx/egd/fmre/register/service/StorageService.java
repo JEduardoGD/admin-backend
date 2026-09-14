@@ -23,9 +23,4 @@ public interface StorageService {
     String getExtension(InputStream is) throws StorageException;
 
     String getMimeType(InputStream is) throws StorageException;
-
-    //void deleteAll();
-
-    //void init();
-
 }
