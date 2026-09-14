@@ -40,7 +40,7 @@ Multipart uploads are capped at 15MB (`spring.servlet.multipart` + Tomcat `max-s
 
 Controller → service interface → `service.impl` → Spring Data repository + mapper. Do not put persistence or mapping logic in controllers.
 
-Domain validation that is not persistence belongs in `component/` + `component/impl` (example: `AfiliacionValidatorComponent`). Services call the component and throw `service.exceptions.*`.
+Domain validation that is not persistence belongs in `component/` + `component/impl` (examples: `AfiliacionValidatorComponent`, `AficionadoComponent` — the latter also handles aficionado capture rules like CERTIFICADO image creation). Services call the component and throw `service.exceptions.*`.
 
 ```
 src/main/java/mx/egd/fmre/register/
@@ -58,7 +58,7 @@ src/main/java/mx/egd/fmre/register/
 ├── persistence/repository/        # Spring Data JPA
 ├── record/                        # TipoImagen, UserInfo, OpenIdConfiguration, UploadResult
 ├── service/ + service/impl/
-├── service/exceptions/            # AddressServiceException, AfiliacionServiceException, ServiceException
+├── service/exceptions/            # ServiceException + per-resource subclasses (Address, Afiliacion, Aficionado, Aspirante)
 ├── util/                          # DateTimeUtil, MimeTypesUtil, StaticValues, DistinctByKey
 └── util/exception/                # UtilException, MimeTypesUtilException
 ```
@@ -67,7 +67,7 @@ src/main/java/mx/egd/fmre/register/
 
 `SecurityConfig` currently `permitAll`s `/**` (JWT resource server is still configured). CSRF is disabled. CORS allows GET/POST/PUT/DELETE/OPTIONS with `Authorization`, `Cache-Control`, `Content-Type`, and `allowCredentials`.
 
-Active public matchers: `/api/public/**`, `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html`, plus the catch-all `/**`. Intended-but-currently-commented matchers: `/static_catalog/**`, `/imagen/**`, `/file/**`. There is no `/api` prefix on existing controllers. Paths are resource names at the root (`/persona`, `/domicilio`, `/afiliacion`, `/datocontacto`, `/sumary`, `/static_catalog/...`, `/file`, `/imagen`, `/address`).
+Active public matchers: `/api/public/**`, `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html`, plus the catch-all `/**`. Intended-but-currently-commented matchers: `/static_catalog/**`, `/imagen/**`, `/file/**`. There is no `/api` prefix on existing controllers. Paths are resource names at the root (`/persona`, `/domicilio`, `/afiliacion`, `/aspirante`, `/aficionado`, `/datocontacto`, `/sumary`, `/static_catalog/...`, `/file`, `/imagen`, `/address`).
 
 New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list in `SecurityConfig` the same way `/static_catalog/**` was added. Do not rely on the current `/**` permitAll remaining.
 
@@ -86,6 +86,15 @@ New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list
 | PUT | `/afiliacion` | Update; 400 if `idAfiliacion` is missing or `<= 0` |
 | GET | `/afiliacion/find_by/id_afiliacion/{idAfiliacion}` | By id |
 | GET | `/afiliacion/find_by/id_persona/{idPersona}` | List by person; 400 if `idPersona <= 0` |
+| POST | `/aspirante` | Create; controller nulls `idAspirante` |
+| PUT | `/aspirante` | Update; 400 if `idAspirante` is missing or `<= 0` |
+| GET | `/aspirante/find_by/id_aspirante/{idAspirante}` | By id |
+| GET | `/aspirante/find_by/id_persona/{idPersona}` | List by person; 400 if `idPersona <= 0` |
+| POST | `/aficionado` | Create; controller nulls `idAficionado`; runs `AficionadoComponent` validations; if no `idImagen` but `uuid` present, creates a CERTIFICADO `T_IMAGEN` row linked to the persona |
+| PUT | `/aficionado` | Update; 400 if `idAficionado` is missing or `<= 0` |
+| GET | `/aficionado/find_by/id_aficionado/{idAficionado}` | By id |
+| DELETE | `/aficionado/{idAficionado}` | Soft close: sets `fechaFin` to today and saves; 400 if `idAficionado <= 0`; 500 with message if not found or already closed |
+| GET | `/aficionado/find_by/id_persona/{idPersona}` | List by person; 400 if `idPersona <= 0` |
 | POST | `/datocontacto` | Create; controller nulls `idDatoContacto` |
 | PUT | `/datocontacto` | Update; 400 if `idDatoContacto` is missing or `<= 0` |
 | GET | `/datocontacto/find_by/id/{idDatoContacto}` | By id; 404 if not found |
@@ -116,13 +125,13 @@ New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list
 - Schema is **not** auto-created (`spring.jpa.hibernate.ddl-auto` is unset). Apply `db/db_register.sql` to the MySQL from Compose.
 - Catalog seeds: `db/C_TIPOIMAGENDOCUMENTO_*.sql`, `db/C_ESTADO_*.sql`, `db/C_TIPOAFILIACION_*.sql`, `db/C_TIPODATOCONTACTO_*.sql`. Workbench model: `db/BDAFILIACION.mwb`.
 - Table naming: `C_*` catalogs, `T_*` transactional. Schema name `db_register`.
-- Mapped entities: `T_PERSONA`, `T_DOMICILIO`, `T_IMAGEN`, `T_AFILIACION`, `T_DATOCONTACTO`, `C_TIPOIMAGENDOCUMENTO`, `C_ESTADO`, `C_TIPODATOCONTACTO`, `C_TIPOAFILIACION`.
-- SQL also defines `T_ASPIRANTE`, `T_AFICIONADO` with **no** JPA mapping yet (`T_RADIOAFICIONADO` was replaced by `T_AFICIONADO`, which links `T_PERSONA` and a required `T_IMAGEN`).
-- `T_AFILIACION` requires `IDPERSONA`, `IDESTADO`, and `IDTIPOAFILIACION` (FK to `C_TIPOAFILIACION`, seeded 1–3: AFICIONADO / ASPIRANTE / EXTRANJERO). `idTipoAfiliacion` is exposed on the `Afiliacion` DTO and mapped via nested `@Mapping` both directions. `T_ASPIRANTE` gained `IDESTADO` + `CONTADORESTADO` — still not exposed via DTOs/mappers.
-- IDs: `T_PERSONA` / `T_DOMICILIO` / `T_IMAGEN` / `T_AFILIACION` / `T_DATOCONTACTO` use `IDENTITY`. `C_TIPOIMAGENDOCUMENTO` PK is not auto-increment in SQL; the entity currently uses `GenerationType.TABLE`. `C_ESTADO`, `C_TIPOAFILIACION`, and `C_TIPODATOCONTACTO` PKs are not auto-increment in SQL (seed-only catalogs — do not insert from the app); the mapped `C_ESTADO` / `C_TIPODATOCONTACTO` / `C_TIPOAFILIACION` entities use `GenerationType.IDENTITY`.
+- Mapped entities: `T_PERSONA`, `T_DOMICILIO`, `T_IMAGEN`, `T_AFILIACION`, `T_ASPIRANTE`, `T_AFICIONADO`, `T_DATOCONTACTO`, `C_TIPOIMAGENDOCUMENTO`, `C_ESTADO`, `C_TIPODATOCONTACTO`, `C_TIPOAFILIACION`.
+- `T_RADIOAFICIONADO` was replaced by `T_AFICIONADO`, which links `T_PERSONA` and an optional `T_IMAGEN` (`IDIMAGEN` is `NULL`-able; a new capture may instead send only a file `uuid` and the component creates the CERTIFICADO imagen row). Its `FECHAFIN` was changed from `VARCHAR(45)` to `DATE` and `MODIFIED_AT DATETIME NOT NULL` was added in `db_register.sql`.
+- `T_AFILIACION` requires `IDPERSONA`, `IDESTADO`, and `IDTIPOAFILIACION` (FK to `C_TIPOAFILIACION`, seeded 1–3: AFICIONADO / ASPIRANTE / EXTRANJERO). `idTipoAfiliacion` is exposed on the `Afiliacion` DTO and mapped via nested `@Mapping` both directions. `T_ASPIRANTE` requires `IDPERSONA` and `IDESTADO` plus `CONTADORESTADO`; both ids are exposed on the `Aspirante` DTO via nested `@Mapping`. `T_AFICIONADO` ids (`idPersona`, `idImagen`) are exposed the same way on the `Aficionado` DTO.
+- IDs: `T_PERSONA` / `T_DOMICILIO` / `T_IMAGEN` / `T_AFILIACION` / `T_ASPIRANTE` / `T_AFICIONADO` / `T_DATOCONTACTO` use `IDENTITY`. `C_TIPOIMAGENDOCUMENTO` PK is not auto-increment in SQL; the entity currently uses `GenerationType.TABLE`. `C_ESTADO`, `C_TIPOAFILIACION`, and `C_TIPODATOCONTACTO` PKs are not auto-increment in SQL (seed-only catalogs — do not insert from the app); the mapped `C_ESTADO` / `C_TIPODATOCONTACTO` / `C_TIPOAFILIACION` entities use `GenerationType.IDENTITY`.
 - `C_TIPODATOCONTACTO` is `INT` PK + `TIPOCONTACTO` / `DESCRIPCION` (seeded EMAIL / MOVIL / FIJO); `T_DATOCONTACTO.IDTIPODATOCONTACTO` is now `INT` referencing it.
 - `T_IMAGEN` links optionally to `T_PERSONA` and/or `T_AFILIACION`, plus required `C_TIPOIMAGENDOCUMENTO`. File bytes live on disk keyed by `UUID`, not in the row.
-- `T_AFILIACION` requires `IDPERSONA` and `IDESTADO` (and `IDTIPOAFILIACION` in SQL). `VITALICIA` / `DELETED` are `TINYINT`. `MODIFIED_AT` is set in `@PrePersist` / `@PreUpdate`.
+- `T_AFILIACION` requires `IDPERSONA` and `IDESTADO` (and `IDTIPOAFILIACION` in SQL). `VITALICIA` / `DELETED` are `TINYINT`. `MODIFIED_AT` is set in `@PrePersist` / `@PreUpdate` on both `T_AFILIACION` and `T_AFICIONADO`.
 
 ## Afiliación rules
 
@@ -135,6 +144,17 @@ New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list
 - Edits are rejected more than 5 days after `MODIFIED_AT`.
 
 Keep those checks in the component; do not copy them into the controller.
+
+## Aficionado rules
+
+`AficionadoServiceImpl` delegates to `AficionadoComponent` before save/delete. Failures become `AficionadoServiceException` (HTTP 500 with message body).
+
+- `fechaInicio` is required; if `fechaFin` is set it must be strictly after `fechaInicio`.
+- A persona may not open a second register while one is vigente (`fechaFin` null).
+- New/edited dates must not sit before the `fechaInicio` of another vigente aficionado (excluding the row being edited).
+- Edits are rejected more than 5 days after `MODIFIED_AT`.
+- Delete is a soft close (`fechaFin` = today) and is rejected if the row already has a `fechaFin`.
+- New capture with no `idImagen` but with `uuid`: the component creates a `T_IMAGEN` of type `StaticValues.CERTIFICADO` linked to the persona.
 
 ## Mapper conventions
 

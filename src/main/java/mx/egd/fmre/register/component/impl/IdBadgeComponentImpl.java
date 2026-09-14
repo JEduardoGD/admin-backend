@@ -95,16 +95,23 @@ public class IdBadgeComponentImpl implements IdBadgeComponent {
     @Override
     public void addNombreAfiliado(Document document, Integer idPersona) {
         Persona persona = personaService.findByIdPersona(idPersona);
-        StringBuilder sb = new StringBuilder();
-        sb.append(persona.getNombre() != null ? persona.getNombre() : null);
-        sb.append(persona.getPrimerApellido() != null ? " " + persona.getPrimerApellido(): null);
-        sb.append(persona.getSegundoApellido() != null ? " " + persona.getSegundoApellido(): null);
+        String nombreCompleto = "";
+        if(persona.getNombre() != null) {
+            nombreCompleto += persona.getNombre() + " ";
+        }
+        if(persona.getPrimerApellido() != null) {
+            nombreCompleto += persona.getPrimerApellido() + " ";
+        }
+        if(persona.getSegundoApellido() != null) {
+            nombreCompleto += persona.getSegundoApellido() + " ";
+        }
+        nombreCompleto = nombreCompleto.trim();
         PdfFont regularFont;
         try {
             File file = ResourceUtils.getFile("classpath:fonts/Arial Bold/Arial Bold.ttf");
             regularFont = PdfFontFactory.createFont(file.getAbsolutePath(), PdfEncodings.IDENTITY_H);
 
-            Paragraph p = new Paragraph(sb.toString())
+            Paragraph p = new Paragraph(nombreCompleto)
                     .setFont(regularFont)
                     .setFontSize(12)
                     .setFixedPosition(65, 75, 120);
