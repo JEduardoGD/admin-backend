@@ -14,4 +14,5 @@ public interface AfiliacionService {
 
     List<Afiliacion> findByPersona(Persona persona) throws AfiliacionServiceException;
 
+    Afiliacion findActiveByPersona(Persona persona) throws AfiliacionServiceException;
 }

@@ -43,7 +43,7 @@ public class ImagenServiceImpl implements ImagenService {
     public ImagenDto save(ImagenDto imagenDto) {
         ImagenEntity imagenEntity = ImagenEntityMapper.INSTANCE.imagenDtoToImagenEntity(imagenDto);
         ImagenEntity savedImagenEntity = imagenRepository.save(imagenEntity);
-        return ImagenMapper.INSTANCE.imagenEntityToImagenDto(savedImagenEntity);
+        return ImagenMapper.INSTANCE.map(savedImagenEntity);
     }
 
     @Override
@@ -52,7 +52,7 @@ public class ImagenServiceImpl implements ImagenService {
         personaEntity.setIdPersona(idPersona);
         List<ImagenEntity> imagenEntityList = imagenRepository.findByPersonaEntity(personaEntity);
         return imagenEntityList.stream()
-                .map(i -> ImagenMapper.INSTANCE.imagenEntityToImagenDto(i))
+                .map(i -> ImagenMapper.INSTANCE.map(i))
                 .collect(Collectors.toList());
     }
 
@@ -74,9 +74,22 @@ public class ImagenServiceImpl implements ImagenService {
     }
 
     @Override
+    public byte[] get(String uuid) throws ServiceException {
+        Resource resource = storageService.loadAsResourceByUuid(uuid);
+        BufferedImage original = readRasterImage(resource, uuid);
+        String[] arrName = uuid.split("\\.");
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            ImageIO.write(original, arrName[1].toLowerCase(), out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new StorageException("Failed to create thumbnail for: " + uuid, e);
+        }
+    }
+
+    @Override
     public ImagenDto findById(int id) {
         ImagenEntity imagenEntity = imagenRepository.findById(id).orElse(null);
-        return ImagenMapper.INSTANCE.imagenEntityToImagenDto(imagenEntity);
+        return ImagenMapper.INSTANCE.map(imagenEntity);
     }
     
 

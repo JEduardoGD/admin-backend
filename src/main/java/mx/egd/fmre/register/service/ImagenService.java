@@ -13,5 +13,7 @@ public interface ImagenService {
 
     byte[] getThumbnail(String uuid) throws ServiceException;
 
+    byte[] get(String uuid) throws ServiceException;
+
     ImagenDto findById(int id);
 }

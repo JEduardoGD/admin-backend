@@ -10,8 +10,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import mx.egd.fmre.register.dto.Estado;
+import mx.egd.fmre.register.dto.TipoAfiliacion;
+import mx.egd.fmre.register.dto.TipoDatoContacto;
 import mx.egd.fmre.register.record.TipoImagen;
 import mx.egd.fmre.register.service.EstadoService;
+import mx.egd.fmre.register.service.TipoAfiliacionService;
+import mx.egd.fmre.register.service.TipoDatoContactoService;
 import mx.egd.fmre.register.service.TipoImagenService;
 import mx.egd.fmre.register.util.StaticValues;
 
@@ -20,8 +24,10 @@ import mx.egd.fmre.register.util.StaticValues;
 @RequiredArgsConstructor
 public class StaticCatalogController {
     
-	private final TipoImagenService tipoImagenService;
-	private final EstadoService estadoService;
+    private final TipoImagenService tipoImagenService;
+    private final EstadoService estadoService;
+    private final TipoAfiliacionService tipoAfiliacionService;
+    private final TipoDatoContactoService tipoDatoContactoService;
 	
 	@GetMapping("tipo_imagen")
     public ResponseEntity<List<TipoImagen>> listAll(){
@@ -51,5 +57,17 @@ public class StaticCatalogController {
     public ResponseEntity<Estado> byIdEstado(Integer idEstado){
         Estado estadoList = estadoService.getEstadoByIdEstado(idEstado);
         return new ResponseEntity<>(estadoList, HttpStatus.OK);
+    }
+    
+    @GetMapping("tipo_afiliacion")
+    public ResponseEntity<List<TipoAfiliacion>> tipoAfiliacion(){
+        List<TipoAfiliacion> tipoAfiliacionList = tipoAfiliacionService.findAll();
+        return new ResponseEntity<>(tipoAfiliacionList, HttpStatus.OK);
+    }
+    
+    @GetMapping("tipo_datocontacto")
+    public ResponseEntity<List<TipoDatoContacto>> tipoDatoContacto(){
+        List<TipoDatoContacto> tipoDatoContactoList = tipoDatoContactoService.getTipoDatoContacto();
+        return new ResponseEntity<>(tipoDatoContactoList, HttpStatus.OK);
     }
 }

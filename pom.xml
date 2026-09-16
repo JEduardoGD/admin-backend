@@ -118,6 +118,13 @@
 			<artifactId>thumbnailator</artifactId>
 			<version>0.4.21</version>
 		</dependency>
+		<!-- ipdf-->
+		<dependency>
+			<groupId>com.itextpdf</groupId>
+			<artifactId>itext-core</artifactId>
+			<version>9.0.0</version> <!-- Use the latest 9.x version available -->
+			<type>pom</type>
+		</dependency>
 	</dependencies>
 
 	<build>

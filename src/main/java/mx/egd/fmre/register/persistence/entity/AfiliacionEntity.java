@@ -38,6 +38,10 @@ public class AfiliacionEntity implements Serializable {
     @JoinColumn(name = "IDESTADO")
     private EstadoEntity estado;
 
+    @ManyToOne
+    @JoinColumn(name = "IDTIPOAFILIACION")
+    private TipoAfiliacionEntity tipoAfiliacion;
+
     @Column(name = "FECHAINICIO")
     private LocalDate fechaInicio;
 

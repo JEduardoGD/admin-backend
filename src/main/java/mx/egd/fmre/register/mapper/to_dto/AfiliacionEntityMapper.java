@@ -13,6 +13,7 @@ public interface AfiliacionEntityMapper {
     
     @Mapping(source="persona.idPersona", target = "idPersona")
     @Mapping(source="estado.idEstado", target = "idEstado")
+    @Mapping(source="tipoAfiliacion.idTipoAfiliacion", target = "idTipoAfiliacion")
     Afiliacion map(AfiliacionEntity afiliacionEntity);
 
 }
