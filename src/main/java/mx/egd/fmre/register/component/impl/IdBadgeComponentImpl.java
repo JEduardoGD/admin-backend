@@ -1,7 +1,9 @@
 package mx.egd.fmre.register.component.impl;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
@@ -11,12 +13,15 @@ import java.util.Locale;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
 
+import com.itextpdf.barcodes.BarcodeQRCode;
 import com.itextpdf.io.font.PdfEncodings;
 import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.xobject.PdfFormXObject;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
@@ -124,7 +129,7 @@ public class IdBadgeComponentImpl implements IdBadgeComponent {
     }
     
     @Override
-    public void addViegencia(Document document, Integer idPersona) {
+    public void addVigencia(Document document, Integer idPersona) {
         Persona persona = personaService.findByIdPersona(idPersona);
         Afiliacion afiliacion = null;
         try {
@@ -198,4 +203,233 @@ public class IdBadgeComponentImpl implements IdBadgeComponent {
             e.printStackTrace();
         }
     }
+    
+    @Override
+    public void addTipoAficionado(Document document) {
+        String indicativo = "Radioescucha SWL";
+        double rotationAngle = Math.PI / 2;
+        int fontSize = 22;
+        int posX = 40;
+        int posY = 20;
+        int width = 350;
+        
+        PdfFont regularFont;
+        try {
+            File regularFontFile = ResourceUtils.getFile("classpath:fonts/avita/Avita-Black.otf");
+            regularFont = PdfFontFactory.createFont(regularFontFile.getAbsolutePath(), PdfEncodings.IDENTITY_H);
+
+            Paragraph pBack = new Paragraph(indicativo)
+                    .setFont(regularFont)
+                    .setFontSize(fontSize)
+                    .setFontColor(ColorConstants.WHITE)
+                    .setFixedPosition(posX, posY, width)
+                    .setRotationAngle(rotationAngle);
+            pBack.setTextAlignment(TextAlignment.LEFT);
+            document.add(pBack);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void addApoyoText(Document document) {
+        String textApoyo = "Se solicita a las autoridades CIVILES y MILITARES todo el apoyo que puedan brindar para  el óptimo desempeño de sus funciones";
+        PdfFont regularFont = null;
+        File file;
+        try {
+            file = ResourceUtils.getFile("classpath:fonts/Arial Rounded MT Regular/Arial Rounded MT Regular.ttf");
+            regularFont = PdfFontFactory.createFont(file.getAbsolutePath(), PdfEncodings.IDENTITY_H);
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        Paragraph p = new Paragraph(textApoyo)
+                .setFont(regularFont)
+                .setFontSize(10)
+                .setFontColor(ColorConstants.RED)
+                .setFixedLeading(17)
+                .setMultipliedLeading(1f)
+                .setFixedPosition(23, 240, 155);
+        p.setTextAlignment(TextAlignment.CENTER);
+        document.add(p);
+    }
+    
+    @Override
+    public void addAfiliacionFmreParagraph(Document document) {
+        PdfFont regularFont;
+        try {
+            File file = ResourceUtils.getFile("classpath:fonts/Arial Bold/Arial Bold.ttf");
+            regularFont = PdfFontFactory.createFont(file.getAbsolutePath(), PdfEncodings.IDENTITY_H);
+
+            Paragraph p = new Paragraph("Afiliación FMRE.")
+                    .setFont(regularFont)
+                    .setFontSize(12)
+                    .setFixedPosition(55, 210, 100);
+            p.setTextAlignment(TextAlignment.CENTER);
+            document.add(p);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+    
+    @Override
+    public void addEscudos(Document document) {
+        try (InputStream is = getClass().getResourceAsStream("/cred/FMRE.png")) {
+            byte[] imageBytes = is.readAllBytes();
+
+            ImageData data = ImageDataFactory.create(imageBytes);
+            
+
+            Image image = new Image(data);
+            image.setFixedPosition(15f, 125f);
+            image.scale(0.06f, 0.06f);
+            image.setAutoScaleHeight(false);
+            image.setAutoScaleWidth(false);
+            document.add(image);
+
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+
+        try (InputStream is = getClass().getResourceAsStream("/cred/IARU.png")) {
+            byte[] imageBytes = is.readAllBytes();
+
+            ImageData data = ImageDataFactory.create(imageBytes);
+            
+
+            Image image = new Image(data);
+            image.setFixedPosition(140f, 120f);
+            image.scale(0.35f, 0.35f);
+            image.setAutoScaleHeight(false);
+            image.setAutoScaleWidth(false);
+            document.add(image);
+
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+    
+    @Override
+    public void addQrcode(PdfDocument pdf, Document document) {
+     // 1. Create the QR code data instance
+        String myText = "https://itextpdf.com";
+        BarcodeQRCode qrCode = new BarcodeQRCode(myText);
+
+        // 2. Convert the barcode to a Form XObject
+        PdfFormXObject qrCodeObject = qrCode.createFormXObject(pdf);
+
+        // 3. Convert to a Layout Image object and scale it
+        Image qrCodeImage = new Image(qrCodeObject);
+        qrCodeImage.setHeight(85f);
+        qrCodeImage.setWidth(85f);
+        qrCodeImage.setFixedPosition(63f, 125f);
+
+        // 4. Add to document
+        document.add(qrCodeImage);
+    }
+    
+    @Override
+    public void addSociedadIaru(Document document) {
+        String textApoyo = "Sociedad miembro de IARU Internacional Amateur Radio Union";
+        PdfFont regularFont = null;
+        File file;
+        try {
+            file = ResourceUtils.getFile("classpath:fonts/Arial Rounded MT Regular/Arial Rounded MT Regular.ttf");
+            regularFont = PdfFontFactory.createFont(file.getAbsolutePath(), PdfEncodings.IDENTITY_H);
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        Paragraph p = new Paragraph(textApoyo)
+                .setFont(regularFont)
+                .setFontSize(10)
+                //.setFontColor(ColorConstants.RED)
+                .setFixedLeading(17)
+                .setMultipliedLeading(1f)
+                .setFixedPosition(23, 30, 165);
+        p.setTextAlignment(TextAlignment.CENTER);
+        document.add(p);
+    }
+    
+    @Override
+    public void addIndivativoBack(Document document, Integer idPersona) {
+        Persona persona = personaService.findByIdPersona(idPersona);
+        Afiliacion afiliacion = null;
+        try {
+            afiliacion = afiliacionService.findActiveByPersona(persona);
+        } catch (AfiliacionServiceException e) {
+            // TODO Auto-generated catch block 6, RoundingMode.HALF_UP);
+            e.printStackTrace();
+        }
+        if(afiliacion == null) {
+            log.error("Error: no se localizaron afiliaciones");
+            return;
+        }
+        PdfFont regularFont;
+        try {
+            File file = ResourceUtils.getFile("classpath:fonts/Arial Bold/Arial Bold.ttf");
+            regularFont = PdfFontFactory.createFont(file.getAbsolutePath(), PdfEncodings.IDENTITY_H);
+            String s = String.format("XE-SWL-36-05");
+            Paragraph p = new Paragraph(s)
+                    .setFont(regularFont)
+                    .setFontSize(18)
+                    .setFontColor(ColorConstants.RED)
+                    .setFixedPosition(30, 70, 150);
+            p.setTextAlignment(TextAlignment.CENTER);
+            document.add(p);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

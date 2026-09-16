@@ -19,8 +19,10 @@ import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.AreaBreak;
 import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.properties.AreaBreakType;
 import com.itextpdf.layout.properties.TextAlignment;
 
 import lombok.RequiredArgsConstructor;
@@ -74,9 +76,28 @@ public class IdBadgeServiceImpl implements IdBadgeService {
             
             idBadgeComponent.addNombreAfiliado(document, idPersona);
             
-            idBadgeComponent.addViegencia(document, idPersona);
+            idBadgeComponent.addVigencia(document, idPersona);
             
             idBadgeComponent.addIndicativo(document);
+            
+            idBadgeComponent.addTipoAficionado(document);
+            
+            pdf.addNewPage(customPageSize);
+            document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
+            
+            idBadgeComponent.addApoyoText(document);
+            
+            idBadgeComponent.addEscudos(document);
+            
+            idBadgeComponent.addAfiliacionFmreParagraph(document);
+            
+            addGrekaRev(document);
+            
+            idBadgeComponent.addQrcode(pdf, document);
+            
+            idBadgeComponent.addSociedadIaru(document);
+            
+            idBadgeComponent.addIndivativoBack(document, idPersona);
         }
 
         return baos.toByteArray();
@@ -87,6 +108,7 @@ public class IdBadgeServiceImpl implements IdBadgeService {
             byte[] imageBytes = is.readAllBytes();
 
             ImageData data = ImageDataFactory.create(imageBytes);
+            
 
             Image image = new Image(data);
             image.setFixedPosition(0f, 0f);
@@ -112,6 +134,28 @@ public class IdBadgeServiceImpl implements IdBadgeService {
             image.scale(1f, 1f);
             image.setAutoScaleHeight(false);
             image.setAutoScaleWidth(false);
+            document.add(image);
+
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+    
+    private void addGrekaRev(Document document) {
+        try (InputStream is = getClass().getResourceAsStream("/cred/2_anverso_marcaAgua.png")) {
+            byte[] imageBytes = is.readAllBytes();
+
+            ImageData data = ImageDataFactory.create(imageBytes);
+            
+            BigDecimal posY = SIZE_CRED_WIDTH_CM.multiply(EQUIV_PIXELS.divide(EQUIV_CM));
+
+            Image image = new Image(data);
+            image.setFixedPosition(posY.floatValue(), 0f);
+            image.scale(-1f, 1f);
+            image.setAutoScaleHeight(false);
+            image.setAutoScaleWidth(false);
+            
             document.add(image);
 
         } catch (IOException e) {
