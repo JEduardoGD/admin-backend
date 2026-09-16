@@ -14,6 +14,8 @@ public interface AficionadoService {
 
     List<Aficionado> findByPersona(Persona persona) throws AficionadoServiceException;
 
+    List<Aficionado> findActiveByPersona(Persona persona) throws AficionadoServiceException;
+
     Aficionado delete(Integer idAficionado) throws AficionadoServiceException;
 
 }

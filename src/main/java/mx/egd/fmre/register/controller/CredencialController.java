@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import mx.egd.fmre.register.component.exception.IdBadgeComponentException;
 import mx.egd.fmre.register.service.IdBadgeService;
 
 @RestController
@@ -23,7 +24,13 @@ public class CredencialController {
     
     @GetMapping(path = "/{idPersona}", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<byte[]> getCredencial(@PathVariable Integer idPersona) {
-        byte[] pdfBytes = idBadgeService.createIdBadgeService(idPersona);
+        byte[] pdfBytes = null;
+            try {
+                pdfBytes = idBadgeService.createIdBadgeService(idPersona);
+            } catch (IdBadgeComponentException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         
         // 2. Set the appropriate HTTP headers
         HttpHeaders headers = new HttpHeaders();

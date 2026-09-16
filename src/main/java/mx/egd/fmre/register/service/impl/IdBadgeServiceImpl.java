@@ -1,54 +1,86 @@
 package mx.egd.fmre.register.service.impl;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
-import org.springframework.util.ResourceUtils;
 
-import com.itextpdf.io.font.PdfEncodings;
 import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
-import com.itextpdf.kernel.font.PdfFont;
-import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.AreaBreak;
-import com.itextpdf.layout.element.Image;
-import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.properties.AreaBreakType;
-import com.itextpdf.layout.properties.TextAlignment;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mx.egd.fmre.register.component.IdBadgeComponent;
+import mx.egd.fmre.register.component.exception.IdBadgeComponentException;
+import mx.egd.fmre.register.dto.Aficionado;
+import mx.egd.fmre.register.dto.Afiliacion;
+import mx.egd.fmre.register.dto.Aspirante;
+import mx.egd.fmre.register.dto.ImagenDto;
+import mx.egd.fmre.register.dto.Persona;
+import mx.egd.fmre.register.record.TipoImagen;
+import mx.egd.fmre.register.service.AficionadoService;
+import mx.egd.fmre.register.service.AfiliacionService;
+import mx.egd.fmre.register.service.AspiranteService;
 import mx.egd.fmre.register.service.IdBadgeService;
+import mx.egd.fmre.register.service.ImagenService;
+import mx.egd.fmre.register.service.PersonaService;
+import mx.egd.fmre.register.service.TipoImagenService;
+import mx.egd.fmre.register.service.exceptions.AficionadoServiceException;
+import mx.egd.fmre.register.service.exceptions.AfiliacionServiceException;
+import mx.egd.fmre.register.service.exceptions.AspiranteServiceException;
+import mx.egd.fmre.register.service.exceptions.ServiceException;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class IdBadgeServiceImpl implements IdBadgeService {
     
-    private final IdBadgeComponent idBadgeComponent;
+    private static final String URL_CHECK_FORMAT = "https://fmre.mx/afiliados?id=%s&rnd=%s";
+    
+    private final IdBadgeComponent  idBadgeComponent;
+    private final ImagenService     imagenService;
+    private final TipoImagenService tipoImagenService;
+    private final PersonaService    personaService;
+    private final AfiliacionService afiliacionService;
+    private final AficionadoService aficionadoService;
+    private final AspiranteService  aspiranteService;
 
     // 5 cm are 189 pixels
     private static final BigDecimal EQUIV_PIXELS = BigDecimal.valueOf(189);
     private static final BigDecimal EQUIV_CM = BigDecimal.valueOf(5);
     private static final BigDecimal SIZE_CRED_WIDTH_CM = BigDecimal.valueOf(5.40);
     private static final BigDecimal SIZE_CRED_HEIGHT_CM = BigDecimal.valueOf(8.56);
+    private static final String PERSONAL_FOTO = "PERSONAL FOTO";
+    
+    private TipoImagen tipoImagenDocumentoFotoPersonal;
+    
+    @PostConstruct
+    private void init() {
+        tipoImagenDocumentoFotoPersonal = tipoImagenService.findAllActive().stream()
+                .filter(ti -> ti.tipo().equals(PERSONAL_FOTO))
+                .findAny()
+                .orElse(null);
+    }
 
     @Override
-    public byte[] createIdBadgeService(Integer idPersona) {
+    public byte[] createIdBadgeService(Integer idPersona) throws IdBadgeComponentException {
+        ImageData personalPhotoImageData = getPersonalPhotoImageData(idPersona);
+        Persona persona = personaService.findByIdPersona(idPersona);
+        Afiliacion afiliacion = getAfiliacionByPersona(persona);
+        String indicativo = getIndicativoAficionadoOAspirante(persona);
+        String tipoAfiliacion = getTipoAfiliacion(afiliacion);
+        String url = createCheckUrl(afiliacion);
         
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-        // String dest = "hello_java21.pdf";
 
         // Initialize PDF writer
         PdfWriter writer = new PdfWriter(baos);
@@ -66,21 +98,21 @@ public class IdBadgeServiceImpl implements IdBadgeService {
 
         try (Document document = new Document(pdf)) {
             
-            putBaseImage(document);
+            idBadgeComponent.putBaseImage(document);
             
-            miembreActivoParagrph(document);
+            idBadgeComponent.setMiembreActivoParagrph(document);
             
-            idBadgeComponent.addPhoto(document, idPersona);
+            idBadgeComponent.addPhoto(document, personalPhotoImageData);
             
-            addGreka(document);
+            idBadgeComponent.addGreka(document);
             
-            idBadgeComponent.addNombreAfiliado(document, idPersona);
+            idBadgeComponent.addNombreAfiliado(document, persona);
             
-            idBadgeComponent.addVigencia(document, idPersona);
+            idBadgeComponent.addVigencia(document, afiliacion);
             
-            idBadgeComponent.addIndicativo(document);
+            idBadgeComponent.addIndicativo(document, indicativo);
             
-            idBadgeComponent.addTipoAficionado(document);
+            idBadgeComponent.addTipoAfiliacion(document, tipoAfiliacion);
             
             pdf.addNewPage(customPageSize);
             document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
@@ -91,94 +123,115 @@ public class IdBadgeServiceImpl implements IdBadgeService {
             
             idBadgeComponent.addAfiliacionFmreParagraph(document);
             
-            addGrekaRev(document);
+            idBadgeComponent.addGrekaRev(document, SIZE_CRED_WIDTH_CM, EQUIV_PIXELS, EQUIV_CM);
             
-            idBadgeComponent.addQrcode(pdf, document);
+            idBadgeComponent.addQrcode(pdf, document, url);
             
             idBadgeComponent.addSociedadIaru(document);
             
-            idBadgeComponent.addIndivativoBack(document, idPersona);
+            idBadgeComponent.addIndivativoBack(document, indicativo);
+        } catch (IdBadgeComponentException e) {
+            log.error(e.getMessage());
         }
 
         return baos.toByteArray();
     }
     
-    private void putBaseImage(Document document) {
-        try (InputStream is = getClass().getResourceAsStream("/cred/1PL2.png")) {
-            byte[] imageBytes = is.readAllBytes();
-
-            ImageData data = ImageDataFactory.create(imageBytes);
-            
-
-            Image image = new Image(data);
-            image.setFixedPosition(0f, 0f);
-            image.scale(0.32f, 0.32f);
-            image.setAutoScaleHeight(false);
-            image.setAutoScaleWidth(false);
-            document.add(image);
-
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
     
-    private void addGreka(Document document) {
-        try (InputStream is = getClass().getResourceAsStream("/cred/2_anverso_marcaAgua.png")) {
-            byte[] imageBytes = is.readAllBytes();
-
-            ImageData data = ImageDataFactory.create(imageBytes);
-
-            Image image = new Image(data);
-            image.setFixedPosition(0f, 0f);
-            image.scale(1f, 1f);
-            image.setAutoScaleHeight(false);
-            image.setAutoScaleWidth(false);
-            document.add(image);
-
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-    
-    private void addGrekaRev(Document document) {
-        try (InputStream is = getClass().getResourceAsStream("/cred/2_anverso_marcaAgua.png")) {
-            byte[] imageBytes = is.readAllBytes();
-
-            ImageData data = ImageDataFactory.create(imageBytes);
-            
-            BigDecimal posY = SIZE_CRED_WIDTH_CM.multiply(EQUIV_PIXELS.divide(EQUIV_CM));
-
-            Image image = new Image(data);
-            image.setFixedPosition(posY.floatValue(), 0f);
-            image.scale(-1f, 1f);
-            image.setAutoScaleHeight(false);
-            image.setAutoScaleWidth(false);
-            
-            document.add(image);
-
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-    
-    private void miembreActivoParagrph(Document document) {
-        PdfFont regularFont;
+    private ImageData getPersonalPhotoImageData(Integer idPersona) {
+        List<ImagenDto> imagensList = imagenService.findByIdPersona(idPersona);
+        ImagenDto imagenFotoPersonal = imagensList.stream()
+                .filter(i -> i.getIdTipoImagenDocumento().equals(tipoImagenDocumentoFotoPersonal.idTipoImagen()))
+                .findFirst()
+                .orElse(null);
+        byte[] imagenFotoPersonalByteArray = null;
         try {
-            File file = ResourceUtils.getFile("classpath:fonts/Arial Bold/Arial Bold.ttf");
-            regularFont = PdfFontFactory.createFont(file.getAbsolutePath(), PdfEncodings.IDENTITY_H);
-
-            Paragraph p = new Paragraph("Miembro Activo")
-                    .setFont(regularFont)
-                    .setFontSize(12)
-                    .setFixedPosition(75, 235, 100);
-            p.setTextAlignment(TextAlignment.CENTER);
-            document.add(p);
-        } catch (IOException e) {
+            imagenFotoPersonalByteArray = imagenService.get(imagenFotoPersonal.getUuid());
+        } catch (ServiceException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        
+        return ImageDataFactory.create(imagenFotoPersonalByteArray);
+    }
+    
+    private Afiliacion getAfiliacionByPersona(Persona persona) throws IdBadgeComponentException {
+        if(persona == null) {
+            throw new IdBadgeComponentException("Persona is null");
+        }
+        Afiliacion afiliacion;
+        try {
+            afiliacion = afiliacionService.findActiveByPersona(persona);
+        } catch (AfiliacionServiceException e) {
+            throw new IdBadgeComponentException("Error: no se localizaron afiliaciones");
+        }
+        if(afiliacion == null) {
+            throw new IdBadgeComponentException("Error: no se localizaron afiliaciones");
+        }
+        return afiliacion;
+    }
+    
+    private String getIndicativoAficionadoOAspirante(Persona persona) throws IdBadgeComponentException {
+        Aficionado aficionado = null;
+        List<Aficionado> aficionadoList;
+        try {
+            aficionadoList = aficionadoService.findActiveByPersona(persona);
+        } catch (AficionadoServiceException e) {
+            throw new IdBadgeComponentException("Error al consultar aficionado por persona");
+        }
+        if(aficionadoList != null && !aficionadoList.isEmpty()) {
+            aficionado =  aficionadoList.get(0);
+        }
+        
+        String indicativo;
+        
+        if (aficionado != null) {
+            indicativo = aficionado.getIndicativo();
+
+            if (indicativo.startsWith("XE")) {
+                return indicativo.substring(0, 3) + "-" + indicativo.substring(3, indicativo.length());
+            } else {
+                return indicativo;
+            }
+        }
+        Aspirante aspirante = null;
+        List<Aspirante> aspiranteList = null;
+        try {
+            aspiranteList = aspiranteService.findByPersona(persona);
+        } catch (AspiranteServiceException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        if(aspiranteList == null || aspiranteList.isEmpty()) {
+            aspirante = aspiranteList.get(0);
+        }
+        
+        if(aspirante == null) {
+            return null;
+        }
+        
+        Integer idEstado = aspirante.getIdEstado();
+        int contador = aspirante.getContadorEstado();
+        indicativo = "XE-SWL-" + String.format("%02d", idEstado) + contador;
+        return indicativo;
+    }
+
+    private String getTipoAfiliacion(Afiliacion afiliacion) {
+        if (afiliacion == null) {
+            log.error("Afiliacion is null");
+        }
+        switch (afiliacion.getIdTipoAfiliacion()) {
+        case 1:
+        case 3:
+            return "Radioaficionado";
+        case 2:
+            return "Radioescucha SWL";
+        default:
+            return null;
+        }
+    }
+    
+    private String createCheckUrl(Afiliacion afiliacion) {
+        return String.format(URL_CHECK_FORMAT, afiliacion.getIdAfiliacion(), afiliacion.getIdAfiliacion());
     }
 }

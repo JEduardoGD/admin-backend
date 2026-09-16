@@ -1,5 +1,6 @@
 package mx.egd.fmre.register.service.impl;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,6 +63,24 @@ public class AficionadoServiceImpl implements AficionadoService {
         personaEntity.setIdPersona(persona.getIdPersona());
         List<AficionadoEntity> aficionadoEntity = aficionadoRepository.findByPersona(personaEntity);
         return aficionadoEntity.stream().map(a -> AficionadoEntityMapper.INSTANCE.map(a)).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Aficionado> findActiveByPersona(Persona persona) throws AficionadoServiceException {
+        PersonaEntity personaEntity = new PersonaEntity();
+        personaEntity.setIdPersona(persona.getIdPersona());
+        List<AficionadoEntity> aficionadoEntity = aficionadoRepository.findByPersona(personaEntity);
+        LocalDate localDateNow = DateTimeUtil.getLocalDate();
+        List<AficionadoEntity> filtered = aficionadoEntity.stream()
+                .filter(a -> a.getFechaInicio() != null)
+                .filter(a -> {
+                    if(a.getFechaFin() == null) {
+                        return a.getFechaInicio().isBefore(localDateNow) || a.getFechaInicio().equals(localDateNow);
+                    } else {
+                        return (a.getFechaInicio().isBefore(localDateNow) || a.getFechaInicio().equals(localDateNow)) && localDateNow.isBefore(a.getFechaFin());
+                    }
+                }).toList();
+        return filtered.stream().map(a -> AficionadoEntityMapper.INSTANCE.map(a)).collect(Collectors.toList());
     }
 
     @Override
