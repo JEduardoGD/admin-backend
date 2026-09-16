@@ -37,6 +37,7 @@ import mx.egd.fmre.register.service.TipoImagenService;
 import mx.egd.fmre.register.service.exceptions.AficionadoServiceException;
 import mx.egd.fmre.register.service.exceptions.AfiliacionServiceException;
 import mx.egd.fmre.register.service.exceptions.AspiranteServiceException;
+import mx.egd.fmre.register.service.exceptions.CredencialControllerSeviceException;
 import mx.egd.fmre.register.service.exceptions.ServiceException;
 
 @Service
@@ -72,13 +73,23 @@ public class IdBadgeServiceImpl implements IdBadgeService {
     }
 
     @Override
-    public byte[] createIdBadgeService(Integer idPersona) throws IdBadgeComponentException {
+    public byte[] createIdBadgeService(Integer idPersona) throws CredencialControllerSeviceException {
         ImageData personalPhotoImageData = getPersonalPhotoImageData(idPersona);
         Persona persona = personaService.findByIdPersona(idPersona);
-        Afiliacion afiliacion = getAfiliacionByPersona(persona);
-        String indicativo = getIndicativoAficionadoOAspirante(persona);
-        String tipoAfiliacion = getTipoAfiliacion(afiliacion);
-        String url = createCheckUrl(afiliacion);
+        Afiliacion afiliacion;
+        String indicativo;
+        String tipoAfiliacion;
+        String url;
+        
+        try {
+            afiliacion = getAfiliacionByPersona(persona);
+            indicativo = getIndicativoAficionadoOAspirante(persona);
+            tipoAfiliacion = getTipoAfiliacion(afiliacion);
+            url = createCheckUrl(afiliacion);
+        } catch (IdBadgeComponentException e) {
+            log.error(e.getMessage());
+            throw new CredencialControllerSeviceException(e);
+        }
         
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -132,6 +143,7 @@ public class IdBadgeServiceImpl implements IdBadgeService {
             idBadgeComponent.addIndivativoBack(document, indicativo);
         } catch (IdBadgeComponentException e) {
             log.error(e.getMessage());
+            throw new CredencialControllerSeviceException(e);
         }
 
         return baos.toByteArray();
