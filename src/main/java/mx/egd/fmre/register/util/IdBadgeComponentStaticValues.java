@@ -13,7 +13,8 @@ public abstract class IdBadgeComponentStaticValues {
     protected static final String ARIAL_ROUNDED_MT_REGULAR_FONT_FILE = "fonts/Arial Rounded MT Regular/Arial Rounded MT Regular.ttf";
 
     protected static final Locale SPANISH_MEXICO_LOCALE = Locale.of("es", "MX");
-    protected static final String MEXICO_SPANISH_DATE_FORMAT = "dd 'de' MMMM 'de' yyyy";
+    //protected static final String MEXICO_SPANISH_DATE_FORMAT = "dd 'de' MMMM 'de' yyyy";
+    
     protected static final String VIGENCIA_FORMAT = "Vigencia:\n%s\n%s";
     protected static final String TEXTO_APOYO = "Se solicita a las autoridades CIVILES y MILITARES todo el apoyo que puedan brindar para  el óptimo desempeño de sus funciones";
     protected static final String TEXTO_AFILIACION_FMRE = "Afiliación FMRE.";

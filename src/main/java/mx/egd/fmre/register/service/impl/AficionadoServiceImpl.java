@@ -69,9 +69,9 @@ public class AficionadoServiceImpl implements AficionadoService {
     public List<Aficionado> findActiveByPersona(Persona persona) throws AficionadoServiceException {
         PersonaEntity personaEntity = new PersonaEntity();
         personaEntity.setIdPersona(persona.getIdPersona());
-        List<AficionadoEntity> aficionadoEntity = aficionadoRepository.findByPersona(personaEntity);
+        List<AficionadoEntity> aficionadoEntityList = aficionadoRepository.findByPersona(personaEntity);
         LocalDate localDateNow = DateTimeUtil.getLocalDate();
-        List<AficionadoEntity> filtered = aficionadoEntity.stream()
+        List<AficionadoEntity> filtered = aficionadoEntityList.stream()
                 .filter(a -> a.getFechaInicio() != null)
                 .filter(a -> {
                     if(a.getFechaFin() == null) {

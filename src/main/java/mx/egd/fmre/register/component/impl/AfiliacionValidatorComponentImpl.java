@@ -1,7 +1,6 @@
 package mx.egd.fmre.register.component.impl;
 
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -38,8 +37,8 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
             log.error("Afiliacion is null");
             return AFILIACION_ES_NULO;
         }
-        Date fechaInicio = afiliacion.getFechaInicio();
-        Date fechaFin = afiliacion.getFechaFin();
+        LocalDate fechaInicio = afiliacion.getFechaInicio();
+        LocalDate fechaFin = afiliacion.getFechaFin();
         boolean vitalicia = afiliacion.isVitalicia();
 
         if (fechaInicio == null) {
@@ -47,9 +46,9 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
         }
 
         if (fechaInicio != null && fechaFin != null) {
-            LocalDate fechaInicioLD = DateTimeUtil.toLocalDate(fechaInicio);
-            LocalDate fechaFinLD = DateTimeUtil.toLocalDate(fechaFin);
-            if (!fechaInicioLD.isBefore(fechaFinLD)) {
+            //LocalDate fechaInicioLD = DateTimeUtil.toLocalDate(fechaInicio);
+            //LocalDate fechaFinLD = DateTimeUtil.toLocalDate(fechaFin);
+            if (!fechaInicio.isBefore(fechaFin)) {
                 return FECHA_INICIO_DEBE_SER_ANTERIOR_A_FECHA_FIN;
             }
         }
@@ -68,7 +67,7 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
             return AFILIACION_ES_NULO;
         }
 
-        Date afiliacionafiliacionFechaInicio = afiliacion.getFechaInicio();
+        LocalDate afiliacionafiliacionFechaInicio = afiliacion.getFechaInicio();
         if (afiliacion.getIdPersona() == null) {
             log.error("La afiliación no tiene fechaInicio");
             return AFILIACION_NO_TIENE_ID_PERSONA;
@@ -104,10 +103,7 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
             return EXISTE_AFILIACION_VITALICIA;
         }
         
-        LocalDate afiliacionFechaInicioLD = DateTimeUtil.toLocalDate(afiliacionafiliacionFechaInicio);
-        
-        Date afiliacionFechaFin = afiliacion.getFechaFin();
-        LocalDate afiliacionFechaFinalLD = afiliacionFechaFin != null ? DateTimeUtil.toLocalDate(afiliacionafiliacionFechaInicio) : null;
+        LocalDate afiliacionFechaFin = afiliacion.getFechaFin();
         
         //validar que la nueva fecha inicio no es anterior a cualquier otra fecha inicio
         boolean errorOnFechaInicial = afiliacionesNoEliminadas.stream()
@@ -115,19 +111,19 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
         .filter(a -> {
             LocalDate fechaInicioLD = a.getFechaInicio();
             LocalDate fechaFinLD = a.getFechaFin();
-            return afiliacionFechaInicioLD.isBefore(fechaInicioLD) || afiliacionFechaInicioLD.isBefore(fechaFinLD);
+            return afiliacionafiliacionFechaInicio.isBefore(fechaInicioLD) || afiliacionafiliacionFechaInicio.isBefore(fechaFinLD);
         }).count() > 0;
         if(errorOnFechaInicial) {
             return FECHA_INICIAL_NO_PUEDE_SER_ANTERIOR;
         }
         
-        if(afiliacionFechaFinalLD != null) {
+        if(afiliacionFechaFin != null) {
             boolean errorOnFechaFinal = afiliacionesNoEliminadas.stream()
                     .filter(a -> !a.getIdAfiliacion().equals(afiliacion.getIdAfiliacion()))
                     .filter(a -> {
                         LocalDate fechaInicioLD = a.getFechaInicio();
                         LocalDate fechaFinLD = a.getFechaFin();
-                        return afiliacionFechaFinalLD.isBefore(fechaInicioLD) || afiliacionFechaFinalLD.isBefore(fechaFinLD);
+                        return afiliacionFechaFin.isBefore(fechaInicioLD) || afiliacionFechaFin.isBefore(fechaFinLD);
                     }).count() > 0;
                     if(errorOnFechaFinal) {
                         return FECHA_FINAL_NO_PUEDE_SER_ANTERIOR;

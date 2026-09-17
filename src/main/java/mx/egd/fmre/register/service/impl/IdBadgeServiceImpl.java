@@ -211,10 +211,9 @@ public class IdBadgeServiceImpl implements IdBadgeService {
         try {
             aspiranteList = aspiranteService.findByPersona(persona);
         } catch (AspiranteServiceException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new IdBadgeComponentException("Error al consultar aspirante por persona");
         }
-        if(aspiranteList == null || aspiranteList.isEmpty()) {
+        if(aspiranteList != null && !aspiranteList.isEmpty()) {
             aspirante = aspiranteList.get(0);
         }
         

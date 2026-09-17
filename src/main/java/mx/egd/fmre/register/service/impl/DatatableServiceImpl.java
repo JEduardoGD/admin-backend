@@ -59,6 +59,16 @@ public class DatatableServiceImpl implements DatatableService {
 
     private boolean validateIdBadge(int personaId) {
         List<ElegibleIdBadgeEntity> elegibleIdBadgeList = elegibleIdBadgeService.findByIdPersona(personaId);
-        return (elegibleIdBadgeList != null && !elegibleIdBadgeList.isEmpty());
+        ElegibleIdBadgeEntity elegibleIdBadgeEntity;
+        if (elegibleIdBadgeList != null && !elegibleIdBadgeList.isEmpty()) {
+            elegibleIdBadgeEntity = elegibleIdBadgeList.get(0);
+        } else {
+            return false;
+        }
+        boolean haveAficionadoOrAspiranteReg = elegibleIdBadgeEntity.getIdAficionado() != null
+                || elegibleIdBadgeEntity.getIdAspirante() != null;
+        boolean haveAfiliacion = elegibleIdBadgeEntity.getIdAfiliacion() != null;
+        boolean havePersonalImagen = elegibleIdBadgeEntity.getIdImagen() != null;
+        return haveAficionadoOrAspiranteReg && haveAfiliacion && havePersonalImagen;
     }
 }

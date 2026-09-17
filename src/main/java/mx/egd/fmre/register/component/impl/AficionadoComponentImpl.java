@@ -1,7 +1,6 @@
 package mx.egd.fmre.register.component.impl;
 
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -45,17 +44,15 @@ public class AficionadoComponentImpl implements AficionadoComponent {
             log.error("Aficionado is null");
             return AFICIONADO_ES_NULO;
         }
-        Date fechaInicio = aficionado.getFechaInicio();
-        Date fechaFin = aficionado.getFechaFin();
+        LocalDate fechaInicio = aficionado.getFechaInicio();
+        LocalDate fechaFin = aficionado.getFechaFin();
 
         if (fechaInicio == null) {
             return FECHA_INICIO_REQUERIDO;
         }
 
         if (fechaFin != null) {
-            LocalDate fechaInicioLD = DateTimeUtil.toLocalDate(fechaInicio);
-            LocalDate fechaFinLD = DateTimeUtil.toLocalDate(fechaFin);
-            if (!fechaInicioLD.isBefore(fechaFinLD)) {
+            if (!fechaInicio.isBefore(fechaFin)) {
                 return FECHA_INICIO_DEBE_SER_ANTERIOR_A_FECHA_FIN;
             }
         }
@@ -97,13 +94,11 @@ public class AficionadoComponentImpl implements AficionadoComponent {
             return null;
         }
 
-        LocalDate fechaInicioLD = DateTimeUtil.toLocalDate(aficionado.getFechaInicio());
-        Date aficionadoFechaFin = aficionado.getFechaFin();
-        LocalDate fechaFinLD = aficionadoFechaFin != null ? DateTimeUtil.toLocalDate(aficionadoFechaFin) : null;
+        LocalDate fechaFinLD = aficionado.getFechaFin() != null ? aficionado.getFechaFin() : null;
 
         // validar que la nueva fecha inicio no es anterior a la fecha inicio de cualquier otro vigente
         boolean errorOnFechaInicial = aficionadosVigentes.stream()
-                .anyMatch(a -> fechaInicioLD.isBefore(a.getFechaInicio()));
+                .anyMatch(a -> aficionado.getFechaInicio().isBefore(a.getFechaInicio()));
         if (errorOnFechaInicial) {
             return FECHA_INICIAL_NO_PUEDE_SER_ANTERIOR;
         }

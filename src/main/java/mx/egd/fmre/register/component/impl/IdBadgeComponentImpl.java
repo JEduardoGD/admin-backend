@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 
 import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
@@ -39,26 +39,18 @@ import mx.egd.fmre.register.util.IdBadgeComponentStaticValues;
 @Slf4j
 public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implements IdBadgeComponent {
 
-    private PdfFont arialBoldFont;
-    private PdfFont avitiaBlackFont;
-    private PdfFont avitiaOutlineBlackFont;
-    private PdfFont arialRoundedMtRegularFont;
-
     private ImageData fmreImageData;
     private ImageData iaruImageData;
     private ImageData plecaData;
     private ImageData anversoMarcaAguaImageData;
 
-    private SimpleDateFormat esMexDateformat;
+    DateTimeFormatter formatter;
     
     @PostConstruct
     private void init() throws ComponentException {
-        this.arialBoldFont = loadFont(ARIAL_BOLD_FONT_FILE);
-        this.avitiaBlackFont = loadFont(AVITIA_BLACK_FONT_FILE);
-        this.avitiaOutlineBlackFont = loadFont(AVITIA_OUTLINE_BLACK_FONT_FILE);
-        this.arialRoundedMtRegularFont = loadFont(ARIAL_ROUNDED_MT_REGULAR_FONT_FILE);
-        
-        esMexDateformat = new SimpleDateFormat(MEXICO_SPANISH_DATE_FORMAT, SPANISH_MEXICO_LOCALE);
+        formatter = DateTimeFormatter
+                .ofPattern("dd 'de' MMMM 'de' yyyy")
+                .withLocale(SPANISH_MEXICO_LOCALE);
         
         this.fmreImageData = getImageDataFromResources(FMRE_IMAGE_PATH);
         this.iaruImageData = getImageDataFromResources(IARU_IMAGE_PATH);
@@ -97,9 +89,10 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
     }
     
     @Override
-    public void setMiembreActivoParagrph(Document document) {
+    public void setMiembreActivoParagrph(Document document) throws IdBadgeComponentException {
+        PdfFont pdfFont = loadFont(ARIAL_BOLD_FONT_FILE);
         Paragraph p = new Paragraph(MIEMBRO_ACTIVO)
-                .setFont(arialBoldFont)
+                .setFont(pdfFont)
                 .setFontSize(12)
                 .setFixedPosition(75, 235, 100);
         p.setTextAlignment(TextAlignment.CENTER);
@@ -134,7 +127,7 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
     }
     
     @Override
-    public void addNombreAfiliado(Document document, Persona persona) {
+    public void addNombreAfiliado(Document document, Persona persona) throws IdBadgeComponentException {
         String nombreCompleto = "";
         if (persona.getNombre() != null) {
             nombreCompleto += persona.getNombre() + TEXTO_SPACE;
@@ -147,8 +140,9 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
         }
         nombreCompleto = nombreCompleto.trim();
 
+        PdfFont pdfFont = loadFont(ARIAL_BOLD_FONT_FILE);
         Paragraph p = new Paragraph(nombreCompleto)
-                .setFont(arialBoldFont)
+                .setFont(pdfFont)
                 .setFontSize(12)
                 .setFixedPosition(65, 75, 120);
         p.setTextAlignment(TextAlignment.CENTER);
@@ -161,11 +155,12 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
         if(afiliacion.isVitalicia()) {
             vigencia = "Vigencia:\nvitalicia";
         } else {
-            vigencia =  String.format(VIGENCIA_FORMAT, esMexDateformat.format(afiliacion.getFechaInicio()),
-                    esMexDateformat.format(afiliacion.getFechaFin()));
+            vigencia = String.format(VIGENCIA_FORMAT, afiliacion.getFechaInicio().format(formatter),
+                    afiliacion.getFechaFin().format(formatter));
         }
+        PdfFont pdfFont = loadFont(ARIAL_BOLD_FONT_FILE);
         Paragraph p = new Paragraph(vigencia)
-                .setFont(arialBoldFont)
+                .setFont(pdfFont)
                 .setFontSize(12)
                 .setFontColor(ColorConstants.RED)
                 .setFixedPosition(50, 10, 150);
@@ -174,15 +169,16 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
     }
     
     @Override
-    public void addIndicativo(Document document, String indicativo) {
+    public void addIndicativo(Document document, String indicativo) throws IdBadgeComponentException {
         double rotationAngle = Math.PI / 2;
         int fontSize = 27;
         int posX = 67;
         int posY = 20;
         int width = 350;
         
+        PdfFont pdfFont = loadFont(AVITIA_BLACK_FONT_FILE);
         Paragraph pBack = new Paragraph(indicativo)
-                .setFont(avitiaBlackFont)
+                .setFont(pdfFont)
                 .setFontSize(fontSize)
                 .setFontColor(ColorConstants.WHITE)
                 .setFixedPosition(posX, posY, width)
@@ -190,9 +186,9 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
         pBack.setTextAlignment(TextAlignment.LEFT);
         document.add(pBack);
         
-
+        PdfFont pdfFontB = loadFont(AVITIA_OUTLINE_BLACK_FONT_FILE);
         Paragraph pOutline = new Paragraph(indicativo)
-                .setFont(avitiaOutlineBlackFont)
+                .setFont(pdfFontB)
                 .setFontSize(fontSize)
                 .setFontColor(ColorConstants.BLACK)
                 .setFixedPosition(posX, posY, width)
@@ -202,15 +198,16 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
     }
     
     @Override
-    public void addTipoAfiliacion(Document document, String tipoAfiliacion) {
+    public void addTipoAfiliacion(Document document, String tipoAfiliacion) throws IdBadgeComponentException {
         double rotationAngle = Math.PI / 2;
         int fontSize = 22;
         int posX = 40;
         int posY = 20;
         int width = 350;
         
+        PdfFont pdfFont = loadFont(AVITIA_BLACK_FONT_FILE);
         Paragraph pBack = new Paragraph(tipoAfiliacion)
-                .setFont(avitiaBlackFont)
+                .setFont(pdfFont)
                 .setFontSize(fontSize)
                 .setFontColor(ColorConstants.WHITE)
                 .setFixedPosition(posX, posY, width)
@@ -220,10 +217,10 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
     }
 
     @Override
-    public void addApoyoText(Document document) {
-
+    public void addApoyoText(Document document) throws IdBadgeComponentException {
+        PdfFont pdfFont = loadFont(ARIAL_ROUNDED_MT_REGULAR_FONT_FILE);
         Paragraph p = new Paragraph(TEXTO_APOYO)
-                .setFont(arialRoundedMtRegularFont)
+                .setFont(pdfFont)
                 .setFontSize(10)
                 .setFontColor(ColorConstants.RED)
                 .setFixedLeading(17)
@@ -234,9 +231,10 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
     }
     
     @Override
-    public void addAfiliacionFmreParagraph(Document document) {
+    public void addAfiliacionFmreParagraph(Document document) throws IdBadgeComponentException {
+        PdfFont pdfFont = loadFont(ARIAL_BOLD_FONT_FILE);
         Paragraph p = new Paragraph(TEXTO_AFILIACION_FMRE)
-                .setFont(arialBoldFont)
+                .setFont(pdfFont)
                 .setFontSize(12)
                 .setFixedPosition(55, 210, 100);
         p.setTextAlignment(TextAlignment.CENTER);
@@ -290,9 +288,10 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
     }
     
     @Override
-    public void addSociedadIaru(Document document) {
+    public void addSociedadIaru(Document document) throws IdBadgeComponentException {
+        PdfFont pdfFont = loadFont(ARIAL_ROUNDED_MT_REGULAR_FONT_FILE);
         Paragraph p = new Paragraph(TEXTO_SOCIEDAD_IARU)
-                .setFont(arialRoundedMtRegularFont)
+                .setFont(pdfFont)
                 .setFontSize(10)
                 //.setFontColor(ColorConstants.RED)
                 .setFixedLeading(17)
@@ -303,9 +302,10 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
     }
     
     @Override
-    public void addIndivativoBack(Document document, String indicativo) {
+    public void addIndivativoBack(Document document, String indicativo) throws IdBadgeComponentException {
+        PdfFont pdfFont = loadFont(ARIAL_BOLD_FONT_FILE);
         Paragraph p = new Paragraph(indicativo)
-                .setFont(arialBoldFont)
+                .setFont(pdfFont)
                 .setFontSize(18)
                 .setFontColor(ColorConstants.RED)
                 .setFixedPosition(30, 70, 150);

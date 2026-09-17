@@ -1,7 +1,8 @@
 package mx.egd.fmre.register.dto;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lombok.Data;
 
@@ -13,10 +14,10 @@ public class Afiliacion implements Serializable {
     private Integer idPersona;
     private Integer idEstado;
     private Integer idTipoAfiliacion;
-    private Date fechaInicio;
-    private Date fechaFin;
+    private LocalDate fechaInicio;
+    private LocalDate fechaFin;
     private boolean vitalicia;
     private boolean deleted;
-    private Date modifiedAt;
+    private LocalDateTime modifiedAt;
 
 }
