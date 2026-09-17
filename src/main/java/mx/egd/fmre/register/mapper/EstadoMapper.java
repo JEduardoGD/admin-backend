@@ -10,5 +10,7 @@ import mx.egd.fmre.register.persistence.entity.EstadoEntity;
 public interface EstadoMapper {
     EstadoMapper INSTANCE = Mappers.getMapper(EstadoMapper.class);
 
-    Estado map(EstadoEntity estado);
+    Estado map(EstadoEntity estadoEntity);
+    
+    EstadoEntity map(Estado estado);
 }

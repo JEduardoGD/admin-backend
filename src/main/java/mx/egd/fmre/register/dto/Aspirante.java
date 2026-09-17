@@ -1,6 +1,7 @@
 package mx.egd.fmre.register.dto;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 import lombok.Data;
 
@@ -12,5 +13,6 @@ public class Aspirante implements Serializable {
     private Integer idPersona;
     private Integer idEstado;
     private Integer contadorEstado;
-
+    private LocalDate fechaInicio;
+    private LocalDate fechaFin;
 }

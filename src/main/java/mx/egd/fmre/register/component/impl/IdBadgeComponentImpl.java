@@ -40,8 +40,8 @@ import mx.egd.fmre.register.util.IdBadgeComponentStaticValues;
 public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implements IdBadgeComponent {
 
     private ImageData escudoTranslucidoImageData;
-    private ImageData fmreImageData;
-    private ImageData iaruImageData;
+    //private ImageData fmreImageData;
+    //private ImageData iaruImageData;
     private ImageData plecaData;
     private ImageData anversoMarcaAguaImageData;
 
@@ -54,8 +54,8 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
                 .withLocale(SPANISH_MEXICO_LOCALE);
         
         escudoTranslucidoImageData = getImageDataFromResources(ESCUDO_FMRE_TRANSLUCIDO_IMAGE_PATH);
-        this.fmreImageData = getImageDataFromResources(FMRE_IMAGE_PATH);
-        this.iaruImageData = getImageDataFromResources(IARU_IMAGE_PATH);
+        //this.fmreImageData = getImageDataFromResources(FMRE_IMAGE_PATH);
+        //this.iaruImageData = getImageDataFromResources(IARU_IMAGE_PATH);
         this.plecaData = getImageDataFromResources(PLECA_IMAGE_PATH);
         this.anversoMarcaAguaImageData = getImageDataFromResources(ANVERSO_MARCA_AGUA_IMAGE_PATH);
     }
@@ -264,6 +264,7 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
         document.add(image);
     }
     
+    /*
     @Override
     public void addEscudos(Document document) {
         Image fmreImage = new Image(fmreImageData);
@@ -281,6 +282,7 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
         iaruImage.setAutoScaleWidth(false);
         document.add(iaruImage);
     }
+    */
     
     @Override
     public void addQrcode(PdfDocument pdf, Document document, String url) {

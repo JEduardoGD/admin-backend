@@ -1,6 +1,7 @@
 package mx.egd.fmre.register.persistence.entity;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,4 +37,10 @@ public class AspiranteEntity implements Serializable {
 
     @Column(name = "CONTADORESTADO", nullable = false)
     private Integer contadorEstado;
+    
+    @Column(name = "FECHAINICIO", nullable = false)
+    private LocalDate fechaInicio;
+    
+    @Column(name = "FECHAFIN")
+    private LocalDate fechaFin;
 }

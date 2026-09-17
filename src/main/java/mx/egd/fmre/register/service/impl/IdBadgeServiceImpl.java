@@ -225,7 +225,7 @@ public class IdBadgeServiceImpl implements IdBadgeService {
         
         Integer idEstado = aspirante.getIdEstado();
         int contador = aspirante.getContadorEstado();
-        indicativo = "XE-SWL-" + String.format("%02d", idEstado) + contador;
+        indicativo = "XE-SWL-" + String.format("%02d", idEstado) + "-" + String.format("%02d", contador);
         return indicativo;
     }
 

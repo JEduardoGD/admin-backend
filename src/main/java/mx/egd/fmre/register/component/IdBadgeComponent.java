@@ -34,7 +34,7 @@ public interface IdBadgeComponent {
 
     void addGrekaRev(Document document, BigDecimal sizeCredWithCm, BigDecimal equivPixels, BigDecimal equivCm);
 
-    void addEscudos(Document document);
+    //void addEscudos(Document document);
 
     void addQrcode(PdfDocument pdf, Document document, String url);
 
