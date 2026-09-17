@@ -39,6 +39,7 @@ import mx.egd.fmre.register.util.IdBadgeComponentStaticValues;
 @Slf4j
 public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implements IdBadgeComponent {
 
+    private ImageData escudoTranslucidoImageData;
     private ImageData fmreImageData;
     private ImageData iaruImageData;
     private ImageData plecaData;
@@ -52,6 +53,7 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
                 .ofPattern("dd 'de' MMMM 'de' yyyy")
                 .withLocale(SPANISH_MEXICO_LOCALE);
         
+        escudoTranslucidoImageData = getImageDataFromResources(ESCUDO_FMRE_TRANSLUCIDO_IMAGE_PATH);
         this.fmreImageData = getImageDataFromResources(FMRE_IMAGE_PATH);
         this.iaruImageData = getImageDataFromResources(IARU_IMAGE_PATH);
         this.plecaData = getImageDataFromResources(PLECA_IMAGE_PATH);
@@ -77,9 +79,19 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
             throw new IdBadgeComponentException(e);
         }
     }
+    
+    @Override
+    public void addBaseImagen(Document document) {
+        Image image = new Image(escudoTranslucidoImageData);
+        image.setFixedPosition(0f, 0f);
+        image.scale(0.15f, 0.15f);
+        image.setAutoScaleHeight(false);
+        image.setAutoScaleWidth(false);
+        document.add(image);
+    }
 
     @Override
-    public void putBaseImage(Document document) throws IdBadgeComponentException {
+    public void addPleca(Document document) throws IdBadgeComponentException {
             Image image = new Image(plecaData);
             image.setFixedPosition(0f, 0f);
             image.scale(0.32f, 0.32f);

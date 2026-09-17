@@ -26,4 +26,5 @@ public abstract class IdBadgeComponentStaticValues {
     protected static final String IARU_IMAGE_PATH = "/cred/IARU.png";
     protected static final String PLECA_IMAGE_PATH = "/cred/1PL2.png";
     protected static final String ANVERSO_MARCA_AGUA_IMAGE_PATH = "/cred/2_anverso_marcaAgua.png";
+    protected static final String ESCUDO_FMRE_TRANSLUCIDO_IMAGE_PATH = "/cred/Gemini_Generated_Image_nukpkvnukpkvnukp.jpeg";
 }

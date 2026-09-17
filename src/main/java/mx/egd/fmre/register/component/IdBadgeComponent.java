@@ -12,7 +12,7 @@ import mx.egd.fmre.register.dto.Persona;
 
 public interface IdBadgeComponent {
 
-    void putBaseImage(Document document) throws IdBadgeComponentException;
+    void addPleca(Document document) throws IdBadgeComponentException;
 
     void setMiembreActivoParagrph(Document document) throws IdBadgeComponentException;
 
@@ -41,4 +41,6 @@ public interface IdBadgeComponent {
     void addSociedadIaru(Document document) throws IdBadgeComponentException;
 
     void addIndivativoBack(Document document, String indicativo) throws IdBadgeComponentException;
+
+    void addBaseImagen(Document document);
 }

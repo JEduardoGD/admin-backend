@@ -109,7 +109,7 @@ public class IdBadgeServiceImpl implements IdBadgeService {
 
         try (Document document = new Document(pdf)) {
             
-            idBadgeComponent.putBaseImage(document);
+            idBadgeComponent.addPleca(document);
             
             idBadgeComponent.setMiembreActivoParagrph(document);
             
@@ -128,9 +128,11 @@ public class IdBadgeServiceImpl implements IdBadgeService {
             pdf.addNewPage(customPageSize);
             document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
             
+            idBadgeComponent.addBaseImagen(document);
+            
             idBadgeComponent.addApoyoText(document);
             
-            idBadgeComponent.addEscudos(document);
+            //idBadgeComponent.addEscudos(document);
             
             idBadgeComponent.addAfiliacionFmreParagraph(document);
             
