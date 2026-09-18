@@ -1,5 +1,6 @@
 package mx.egd.fmre.register.persistence.entity;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import jakarta.persistence.Column;
@@ -15,21 +16,26 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @Table(name = "C_TIPOIMAGENDOCUMENTO")
-public class TipoImagenDocumentoEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.TABLE)
-    @Column(name = "IDTIPOIMAGENDOCUMENTO")
+public class TipoImagenDocumentoEntity implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3641602351457778666L;
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.TABLE)
+	@Column(name = "IDTIPOIMAGENDOCUMENTO")
 	private Integer idTipoImagenDocumento;
 
-    @Column(name = "TIPO")
+	@Column(name = "TIPO")
 	private String tipo;
 
-    @Column(name = "DESCRIPCION")
+	@Column(name = "DESCRIPCION")
 	private String descripcion;
 
-    @Column(name = "FECHAINICIO")
+	@Column(name = "FECHAINICIO")
 	private Date fechaInicio;
 
-    @Column(name = "FECHAFIN")
+	@Column(name = "FECHAFIN")
 	private Date fechaFin;
 }

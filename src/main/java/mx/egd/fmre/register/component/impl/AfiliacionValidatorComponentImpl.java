@@ -28,13 +28,14 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
     private static final String FECHA_INICIAL_NO_PUEDE_SER_ANTERIOR = "La fecha inicial no puede ser anterior a la fecha inicial o fecha final de otra afiliacion vigente";
     private static final String FECHA_FINAL_NO_PUEDE_SER_ANTERIOR = "La fecha final no puede ser anterior a la fecha inicial o fecha final de otra afiliacion vigente";
     private static final String REGISTRO_NO_SE_PUEDE_MODIFICAR = "El registro no se puede modificar luego de 5 dias de haber sido registrado";
+    private static final String LA_AFILIACION_NO_TIENE_FECHAINICIO = "La afiliación no tiene fechaInicio";
 
     private final AfiliacionRepository afiliacionRepository;
 
     @Override
     public String validatePeriodOnAfiliacion(Afiliacion afiliacion) {
         if (afiliacion == null) {
-            log.error("Afiliacion is null");
+            log.error(AFILIACION_ES_NULO);
             return AFILIACION_ES_NULO;
         }
         LocalDate fechaInicio = afiliacion.getFechaInicio();
@@ -63,19 +64,19 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
     @Override
     public String validateOverlaps(Afiliacion afiliacion) {
         if (afiliacion == null) {
-            log.error("Afiliacion is null");
+            log.error(AFILIACION_ES_NULO);
             return AFILIACION_ES_NULO;
         }
 
         LocalDate afiliacionafiliacionFechaInicio = afiliacion.getFechaInicio();
         if (afiliacion.getIdPersona() == null) {
-            log.error("La afiliación no tiene fechaInicio");
+            log.error(LA_AFILIACION_NO_TIENE_FECHAINICIO);
             return AFILIACION_NO_TIENE_ID_PERSONA;
         }
 
         Integer idPersona = afiliacion.getIdPersona();
         if (afiliacion.getIdPersona() == null) {
-            log.error("La afiliación no tiene un IDPERSONA");
+            log.error(AFILIACION_NO_TIENE_ID_PERSONA);
             return AFILIACION_NO_TIENE_ID_PERSONA;
         }
 
@@ -138,7 +139,7 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
     @Override
     public String validatePeriodForEditing(Afiliacion afiliacion) {
         if (afiliacion == null) {
-            log.error("Afiliacion is null");
+            log.error(AFILIACION_ES_NULO);
             return AFILIACION_ES_NULO;
         }
 
@@ -150,7 +151,7 @@ public class AfiliacionValidatorComponentImpl implements AfiliacionValidatorComp
         Integer idAfiliacion = afiliacion.getIdAfiliacion();
         AfiliacionEntity afiliacionEntity = afiliacionRepository.findById(idAfiliacion).orElse(null);
         if (afiliacionEntity == null) {
-            log.error("Afiliacion is null");
+            log.error(AFILIACION_ES_NULO);
             return AFILIACION_ES_NULO;
         }
 

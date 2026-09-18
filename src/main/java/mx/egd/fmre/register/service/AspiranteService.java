@@ -4,6 +4,7 @@ import java.util.List;
 
 import mx.egd.fmre.register.dto.Aspirante;
 import mx.egd.fmre.register.dto.Persona;
+import mx.egd.fmre.register.persistence.entity.EstadoEntity;
 import mx.egd.fmre.register.service.exceptions.AspiranteServiceException;
 
 public interface AspiranteService {
@@ -13,5 +14,7 @@ public interface AspiranteService {
     Aspirante findByIdAspirante(Integer idAspirante) throws AspiranteServiceException;
 
     List<Aspirante> findByPersona(Persona persona) throws AspiranteServiceException;
+
+    Integer calculateNextEstadoContador(EstadoEntity estado);
 
 }

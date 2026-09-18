@@ -1,5 +1,7 @@
 package mx.egd.fmre.register.persistence.entity;
 
+import java.io.Serializable;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,8 +17,13 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @Table(name = "T_IMAGEN")
-public class ImagenEntity {
-    @Id
+public class ImagenEntity implements Serializable {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -2277309729246303839L;
+
+	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "IDIMAGEN")
 	private Integer idImagen;

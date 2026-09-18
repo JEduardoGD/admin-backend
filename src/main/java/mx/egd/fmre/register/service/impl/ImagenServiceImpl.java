@@ -16,16 +16,15 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import mx.egd.fmre.register.dto.ImagenDto;
-import mx.egd.fmre.register.exception.StorageException;
-import mx.egd.fmre.register.exception.UnsupportedImageTypeException;
+import mx.egd.fmre.register.exception.FileSystemStorageServiceException;
 import mx.egd.fmre.register.mapper.to_dto.ImagenMapper;
 import mx.egd.fmre.register.mapper.to_entity.ImagenEntityMapper;
 import mx.egd.fmre.register.persistence.entity.ImagenEntity;
 import mx.egd.fmre.register.persistence.entity.PersonaEntity;
 import mx.egd.fmre.register.persistence.repository.ImagenRepository;
+import mx.egd.fmre.register.service.FileSystemStorageService;
 import mx.egd.fmre.register.service.ImagenService;
-import mx.egd.fmre.register.service.StorageService;
-import mx.egd.fmre.register.service.exceptions.ServiceException;
+import mx.egd.fmre.register.service.exceptions.ImagenServiceException;
 import net.coobird.thumbnailator.Thumbnails;
 
 @Service
@@ -37,7 +36,7 @@ public class ImagenServiceImpl implements ImagenService {
     private static final double THUMBNAIL_QUALITY = 0.8;
 
     private final ImagenRepository imagenRepository;
-    private final StorageService storageService;
+    private final FileSystemStorageService storageService;
 
     @Override
     public ImagenDto save(ImagenDto imagenDto) {
@@ -57,8 +56,13 @@ public class ImagenServiceImpl implements ImagenService {
     }
 
     @Override
-    public byte[] getThumbnail(String uuid) throws ServiceException {
-        Resource resource = storageService.loadAsResourceByUuid(uuid);
+    public byte[] getThumbnail(String uuid) throws ImagenServiceException {
+        Resource resource;
+		try {
+			resource = storageService.loadAsResourceByUuid(uuid);
+		} catch (FileSystemStorageServiceException e) {
+			throw new ImagenServiceException(e);
+		}
         BufferedImage original = readRasterImage(resource, uuid);
         BufferedImage rgb = flattenToRgb(original);
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -69,22 +73,27 @@ public class ImagenServiceImpl implements ImagenService {
                     .toOutputStream(out);
             return out.toByteArray();
         } catch (IOException e) {
-            throw new StorageException("Failed to create thumbnail for: " + uuid, e);
+            throw new ImagenServiceException("Failed to create thumbnail for: " + uuid, e);
         }
     }
 
-    @Override
-    public byte[] get(String uuid) throws ServiceException {
-        Resource resource = storageService.loadAsResourceByUuid(uuid);
-        BufferedImage original = readRasterImage(resource, uuid);
-        String[] arrName = uuid.split("\\.");
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            ImageIO.write(original, arrName[1].toLowerCase(), out);
-            return out.toByteArray();
-        } catch (IOException e) {
-            throw new StorageException("Failed to create thumbnail for: " + uuid, e);
-        }
-    }
+	@Override
+	public byte[] get(String uuid) throws ImagenServiceException {
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+			Resource resource;
+			try {
+				resource = storageService.loadAsResourceByUuid(uuid);
+			} catch (FileSystemStorageServiceException e) {
+				throw new ImagenServiceException(e);
+			}
+			BufferedImage original = readRasterImage(resource, uuid);
+			String[] arrName = uuid.split("\\.");
+			ImageIO.write(original, arrName[1].toLowerCase(), out);
+			return out.toByteArray();
+		} catch (IOException e) {
+			throw new ImagenServiceException("Failed to create thumbnail for: " + uuid, e);
+		}
+	}
 
     @Override
     public ImagenDto findById(int id) {
@@ -93,15 +102,15 @@ public class ImagenServiceImpl implements ImagenService {
     }
     
 
-    private BufferedImage readRasterImage(Resource resource, String uuid) throws ServiceException {
+    private BufferedImage readRasterImage(Resource resource, String uuid) throws ImagenServiceException {
         try (InputStream in = resource.getInputStream()) {
             BufferedImage original = ImageIO.read(in);
             if (original == null) {
-                throw new UnsupportedImageTypeException("Stored file is not a raster image: " + uuid);
+                throw new ImagenServiceException("Stored file is not a raster image: " + uuid);
             }
             return original;
         } catch (IOException e) {
-            throw new StorageException("Could not read file: " + uuid, e);
+            throw new ImagenServiceException("Could not read file: " + uuid, e);
         }
     }
 
