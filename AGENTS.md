@@ -10,6 +10,8 @@ Instructions for agents working in this repository. Do not duplicate the README.
 - OAuth2 JWT resource server (AWS Cognito) — still wired; see Security
 - Lombok, MapStruct 1.6.3, springdoc-openapi 2.8.3, spring-boot-devtools
 - Apache Tika 3.0.0 (MIME detection), Thumbnailator 0.4.21 (JPEG thumbnails)
+- iText Core 9.0.0 (PDF generation for ID badges)
+- `spring-boot-starter-mail` for SMTP email delivery
 - `spring-boot-starter-restclient` for the Postalia postal-code API
 
 ## Developer commands
@@ -30,7 +32,7 @@ Multipart uploads are capped at 15MB (`spring.servlet.multipart` + Tomcat `max-s
 
 - `.env` at the repo root is gitignored and required at runtime.
 - Loaded via `spring.config.import: "optional:file:.env[.properties]"` — no copies needed.
-- Keys: `DB_ROOT_PASSWORD`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_URL`, `AUTH_AUTHORITY`, `FRONT_URL`, `FILES_LOCATION`, `UPLOAD_PATH`, `POSTALIA_API`.
+- Keys: `DB_ROOT_PASSWORD`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_URL`, `AUTH_AUTHORITY`, `FRONT_URL`, `FILES_LOCATION`, `UPLOAD_PATH`, `POSTALIA_API`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_BCC`, `MAIL_SUBJECT`, `MAIL_FROM`, `MAIL_SMTP_PROPERTIES`.
 - CORS origin is only `FRONT_URL` (bound as `spring.frontUrl`). Never hardcode origins; inject `@Value("${spring.frontUrl}")`.
 - File store is `FILES_LOCATION` + `UPLOAD_PATH` (bound as `spring.files.location` / `spring.files.upload_path`). Uploads are stored as UUID filenames; do not hardcode a local upload directory.
 - `POSTALIA_API` is a bearer token for `https://postalia.com.mx` (`PostaliaRestClientConfig`). Do not change the base URL without checking that config.
@@ -44,32 +46,33 @@ Domain validation that is not persistence belongs in `component/` + `component/i
 
 ```
 src/main/java/mx/egd/fmre/register/
-├── component/ + component/impl/   # domain validators (not Spring Data)
+├── component/ + component/impl/   # domain validators (not Spring Data); IdBadgeComponent (PDF generation)
+├── component/exception/           # ComponentException, IdBadgeComponentException
 ├── config/                        # SecurityConfig (JWT + CORS), PostaliaRestClientConfig
-├── controller/                    # REST, one class per resource; GlobalExceptionHandler
-├── dto/                           # Lombok request/response DTOs (not JPA)
+├── controller/                    # REST, one class per resource; GlobalExceptionHandler; CredencialController
+├── dto/                           # Lombok request/response DTOs (not JPA); MailDetaislObj, ImagenDto
 ├── dto/datatable/                 # DataTables protocol (QueryObj, DataTableResponse, DatatableObj)
 ├── dto/postalia/                  # Postalia JSON (Localizacion, Colonia)
-├── exception/                     # storage / image / generic web exceptions
+├── exception/                     # RegisterException (base), FileSystemStorageServiceException, UnsupportedImageTypeException
 ├── mapper/                        # PersonaMapper (manual); EstadoMapper, TipoAfiliacionEntityMapper (MapStruct)
-├── mapper/to_dto/                 # MapStruct entity → DTO/record
-├── mapper/to_entity/              # MapStruct DTO → entity
-├── persistence/entity/            # JPA entities
-├── persistence/repository/        # Spring Data JPA
-├── record/                        # TipoImagen, UserInfo, OpenIdConfiguration, UploadResult
-├── service/ + service/impl/
-├── service/exceptions/            # ServiceException + per-resource subclasses (Address, Afiliacion, Aficionado, Aspirante)
-├── util/                          # DateTimeUtil, MimeTypesUtil, StaticValues, DistinctByKey
+├── mapper/to_dto/                 # MapStruct entity → DTO/record (Aficionado, Aspirante, Domicilio, Imagen, TipoImagenDocumento, TipoDatoContacto)
+├── mapper/to_entity/              # MapStruct DTO → entity (Aficionado, Aspirante, DatoContacto, Domicilio, Imagen)
+├── persistence/entity/            # JPA entities; ElegibleIdBadgeEntity (maps V_ELEGIBLE_IDBADGE view)
+├── persistence/repository/        # Spring Data JPA; ElegibleIdBadgeRepository
+├── record/                        # TipoImagen, UserInfo, OpenIdConfiguration, UploadResult (filename, uploadError, frontError)
+├── service/ + service/impl/       # + IdBadgeService, ElegibleIdBadgeService, SendMailService, GetMimeTypeService, FileSystemStorageService
+├── service/exceptions/            # ServiceException + per-resource subclasses (Address, Afiliacion, Aficionado, Aspirante, IdBadge, SendMail, GetMimeType, Imagen, CredencialControllerSevice)
+├── util/                          # DateTimeUtil, MimeTypesUtil, StaticValues, DistinctByKey, IdBadgeComponentStaticValues
 └── util/exception/                # UtilException, MimeTypesUtilException
 ```
 
 ## Security
 
-`SecurityConfig` currently `permitAll`s `/**` (JWT resource server is still configured). CSRF is disabled. CORS allows GET/POST/PUT/DELETE/OPTIONS with `Authorization`, `Cache-Control`, `Content-Type`, and `allowCredentials`.
+`SecurityConfig` uses `.anyRequest().authenticated()` — all requests require a valid JWT bearer token by default. CSRF disable is currently commented out. CORS allows GET/POST/PUT/DELETE/OPTIONS with `Authorization`, `Cache-Control`, `Content-Type`, and `allowCredentials`.
 
-Active public matchers: `/api/public/**`, `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html`, plus the catch-all `/**`. Intended-but-currently-commented matchers: `/static_catalog/**`, `/imagen/**`, `/file/**`. There is no `/api` prefix on existing controllers. Paths are resource names at the root (`/persona`, `/domicilio`, `/afiliacion`, `/aspirante`, `/aficionado`, `/datocontacto`, `/sumary`, `/static_catalog/...`, `/file`, `/imagen`, `/address`).
+Active public matchers (skip auth): `/api/public/**`, `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html`, `/credencial/**`. There is no `/api` prefix on existing controllers. Paths are resource names at the root (`/persona`, `/domicilio`, `/afiliacion`, `/aspirante`, `/aficionado`, `/datocontacto`, `/sumary`, `/static_catalog/...`, `/file`, `/imagen`, `/address`, `/credencial`).
 
-New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list in `SecurityConfig` the same way `/static_catalog/**` was added. Do not rely on the current `/**` permitAll remaining.
+New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list in `SecurityConfig` the same way `/credencial/**` was added.
 
 ## HTTP surface
 
@@ -99,6 +102,7 @@ New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list
 | PUT | `/datocontacto` | Update; 400 if `idDatoContacto` is missing or `<= 0` |
 | GET | `/datocontacto/find_by/id/{idDatoContacto}` | By id; 404 if not found |
 | GET | `/datocontacto/find_by/idpersona/{idPersona}` | List by person; 400 if `idPersona <= 0` |
+| DELETE | `/datocontacto/{idDatoContacto}` | Soft delete; 400 if `idDatoContacto <= 0` |
 | POST | `/imagen` | Create; controller nulls `idImagen`. Metadata only — file bytes go through `/file` |
 | POST | `/imagen/update` | Update; returns `null` if `idImagen` is missing |
 | GET | `/imagen/find_by/idpersona/{idPersona}` | List by person |
@@ -107,6 +111,8 @@ New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list
 | POST | `/file` | Multipart upload; returns `UploadResult` (`filename` is a UUID) |
 | GET | `/file/files/{filename}` | Download stored file; `Content-Type` from Tika |
 | GET | `/address/by_cp/{cp}` | Postalia lookup → `Localizacion` (colonias). Maps 401/404/429 from the remote API |
+| GET | `/credencial/{idPersona}` | Generate and download ID badge PDF |
+| GET | `/credencial/send_idbadge/{idPersona}` | Send ID badge via email |
 | POST | `/sumary` | DataTables listing of personas (`QueryObj` in, `DataTableResponse` out) |
 | GET | `/static_catalog/tipo_imagen` | Active image-document types |
 | GET | `/static_catalog/tipo_imagen/for_persona` | Types for persona (`StaticValues.FOR_PERSONA`) |
@@ -125,7 +131,7 @@ New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list
 - Schema is **not** auto-created (`spring.jpa.hibernate.ddl-auto` is unset). Apply `db/db_register.sql` to the MySQL from Compose.
 - Catalog seeds: `db/C_TIPOIMAGENDOCUMENTO_*.sql`, `db/C_ESTADO_*.sql`, `db/C_TIPOAFILIACION_*.sql`, `db/C_TIPODATOCONTACTO_*.sql`. Workbench model: `db/BDAFILIACION.mwb`.
 - Table naming: `C_*` catalogs, `T_*` transactional. Schema name `db_register`.
-- Mapped entities: `T_PERSONA`, `T_DOMICILIO`, `T_IMAGEN`, `T_AFILIACION`, `T_ASPIRANTE`, `T_AFICIONADO`, `T_DATOCONTACTO`, `C_TIPOIMAGENDOCUMENTO`, `C_ESTADO`, `C_TIPODATOCONTACTO`, `C_TIPOAFILIACION`.
+- Mapped entities: `T_PERSONA`, `T_DOMICILIO`, `T_IMAGEN`, `T_AFILIACION`, `T_ASPIRANTE`, `T_AFICIONADO`, `T_DATOCONTACTO`, `C_TIPOIMAGENDOCUMENTO`, `C_ESTADO`, `C_TIPODATOCONTACTO`, `C_TIPOAFILIACION`. View: `V_ELEGIBLE_IDBADGE` (mapped as `ElegibleIdBadgeEntity`, read-only).
 - `T_RADIOAFICIONADO` was replaced by `T_AFICIONADO`, which links `T_PERSONA` and an optional `T_IMAGEN` (`IDIMAGEN` is `NULL`-able; a new capture may instead send only a file `uuid` and the component creates the CERTIFICADO imagen row). Its `FECHAFIN` was changed from `VARCHAR(45)` to `DATE` and `MODIFIED_AT DATETIME NOT NULL` was added in `db_register.sql`.
 - `T_AFILIACION` requires `IDPERSONA`, `IDESTADO`, and `IDTIPOAFILIACION` (FK to `C_TIPOAFILIACION`, seeded 1–3: AFICIONADO / ASPIRANTE / EXTRANJERO). `idTipoAfiliacion` is exposed on the `Afiliacion` DTO and mapped via nested `@Mapping` both directions. `T_ASPIRANTE` requires `IDPERSONA` and `IDESTADO` plus `CONTADORESTADO`; both ids are exposed on the `Aspirante` DTO via nested `@Mapping`. `T_AFICIONADO` ids (`idPersona`, `idImagen`) are exposed the same way on the `Aficionado` DTO.
 - IDs: `T_PERSONA` / `T_DOMICILIO` / `T_IMAGEN` / `T_AFILIACION` / `T_ASPIRANTE` / `T_AFICIONADO` / `T_DATOCONTACTO` use `IDENTITY`. `C_TIPOIMAGENDOCUMENTO` PK is not auto-increment in SQL; the entity currently uses `GenerationType.TABLE`. `C_ESTADO`, `C_TIPOAFILIACION`, and `C_TIPODATOCONTACTO` PKs are not auto-increment in SQL (seed-only catalogs — do not insert from the app); the mapped `C_ESTADO` / `C_TIPODATOCONTACTO` / `C_TIPOAFILIACION` entities use `GenerationType.IDENTITY`.

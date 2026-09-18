@@ -1,9 +1,14 @@
 package mx.egd.fmre.register.service.impl;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.itextpdf.io.image.ImageData;
@@ -24,20 +29,25 @@ import mx.egd.fmre.register.component.exception.IdBadgeComponentException;
 import mx.egd.fmre.register.dto.Aficionado;
 import mx.egd.fmre.register.dto.Afiliacion;
 import mx.egd.fmre.register.dto.Aspirante;
+import mx.egd.fmre.register.dto.DatoContacto;
 import mx.egd.fmre.register.dto.ImagenDto;
+import mx.egd.fmre.register.dto.MailDetaislObj;
 import mx.egd.fmre.register.dto.Persona;
 import mx.egd.fmre.register.record.TipoImagen;
 import mx.egd.fmre.register.service.AficionadoService;
 import mx.egd.fmre.register.service.AfiliacionService;
 import mx.egd.fmre.register.service.AspiranteService;
+import mx.egd.fmre.register.service.DatoContactoService;
 import mx.egd.fmre.register.service.IdBadgeService;
 import mx.egd.fmre.register.service.ImagenService;
 import mx.egd.fmre.register.service.PersonaService;
+import mx.egd.fmre.register.service.SendMailService;
 import mx.egd.fmre.register.service.TipoImagenService;
 import mx.egd.fmre.register.service.exceptions.AficionadoServiceException;
 import mx.egd.fmre.register.service.exceptions.AfiliacionServiceException;
 import mx.egd.fmre.register.service.exceptions.AspiranteServiceException;
-import mx.egd.fmre.register.service.exceptions.CredencialControllerSeviceException;
+import mx.egd.fmre.register.service.exceptions.IdBadgeServiceException;
+import mx.egd.fmre.register.service.exceptions.SendMailServiceException;
 import mx.egd.fmre.register.service.exceptions.ServiceException;
 
 @Service
@@ -54,6 +64,8 @@ public class IdBadgeServiceImpl implements IdBadgeService {
     private final AfiliacionService afiliacionService;
     private final AficionadoService aficionadoService;
     private final AspiranteService  aspiranteService;
+    private final SendMailService   sendMailService;
+    private final DatoContactoService datoContactoService;
 
     // 5 cm are 189 pixels
     private static final BigDecimal EQUIV_PIXELS = BigDecimal.valueOf(189);
@@ -61,8 +73,33 @@ public class IdBadgeServiceImpl implements IdBadgeService {
     private static final BigDecimal SIZE_CRED_WIDTH_CM = BigDecimal.valueOf(5.40);
     private static final BigDecimal SIZE_CRED_HEIGHT_CM = BigDecimal.valueOf(8.56);
     private static final String PERSONAL_FOTO = "PERSONAL FOTO";
+    private static final String EMAIL_PATH = "/email/email.html";
     
     private TipoImagen tipoImagenDocumentoFotoPersonal;
+    
+    @Value("${spring.mail.host}")
+    private String mailHost;
+    
+    @Value("${spring.mail.port}")
+    private int mailPort;
+    
+    @Value("${spring.mail.username}")
+    private String mailUsername;
+    
+    @Value("${spring.mail.password}")
+    private String mailPassword;
+    
+    @Value("${mail.bcc}")
+    private String mailBcc;
+    
+    @Value("${mail.subject}")
+    private String mailSubject;
+    
+    @Value("${mail.from}")
+    private String mailFrom;
+    
+    @Value("${mail.smtp_properties}")
+    private String smtpProperties;
     
     @PostConstruct
     private void init() {
@@ -73,7 +110,7 @@ public class IdBadgeServiceImpl implements IdBadgeService {
     }
 
     @Override
-    public byte[] createIdBadgeService(Integer idPersona) throws CredencialControllerSeviceException {
+    public byte[] createIdBadgeService(Integer idPersona) throws IdBadgeServiceException {
         ImageData personalPhotoImageData = getPersonalPhotoImageData(idPersona);
         Persona persona = personaService.findByIdPersona(idPersona);
         Afiliacion afiliacion;
@@ -88,7 +125,7 @@ public class IdBadgeServiceImpl implements IdBadgeService {
             url = createCheckUrl(afiliacion);
         } catch (IdBadgeComponentException e) {
             log.error(e.getMessage());
-            throw new CredencialControllerSeviceException(e);
+            throw new IdBadgeServiceException(e);
         }
         
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -145,14 +182,81 @@ public class IdBadgeServiceImpl implements IdBadgeService {
             idBadgeComponent.addIndivativoBack(document, indicativo);
         } catch (IdBadgeComponentException e) {
             log.error(e.getMessage());
-            throw new CredencialControllerSeviceException(e);
+            throw new IdBadgeServiceException(e);
         }
 
         return baos.toByteArray();
     }
     
+    @Override
+    public String createIdBadgdFileName(Integer idPersona) throws IdBadgeServiceException {
+        Persona persona = personaService.findByIdPersona(idPersona);
+        try {
+			return "credencial_" + getIndicativoAficionadoOAspirante(persona) + ".pdf";
+		} catch (IdBadgeComponentException e) {
+            throw new IdBadgeServiceException(e);
+		}
+    }
     
-    private ImageData getPersonalPhotoImageData(Integer idPersona) {
+	@Override
+	public boolean sendIdBadge(Integer idPersona) throws IdBadgeServiceException {
+		Persona persona = personaService.findByIdPersona(idPersona);
+		if(persona == null) {
+			throw new IdBadgeServiceException("No existe la persona");
+		}
+		List<DatoContacto> datoContactoList = datoContactoService.findByIdPersona(persona.getIdPersona());
+		MailDetaislObj mailDetailsObj = new MailDetaislObj();
+		
+		mailDetailsObj.setHost(mailHost);
+		mailDetailsObj.setPort(mailPort);
+		mailDetailsObj.setUsername(mailUsername);
+		mailDetailsObj.setPasswd(mailPassword);
+		
+		DatoContacto datoContactoEmail = datoContactoList.stream()
+				.filter(dc -> dc.getIdTipoDatoContacto() == 1)
+				.findFirst()
+				.orElse(null);
+		if (datoContactoEmail == null) {
+			throw new IdBadgeServiceException("No existe el dato de contacto email");
+		}
+		mailDetailsObj.setToList(Arrays.asList(datoContactoEmail.getDato()));
+		if (mailBcc != null && !mailBcc.isEmpty()) {
+			mailDetailsObj.setBcc(Arrays.asList(mailBcc.split("\\,")));
+		}
+		mailDetailsObj.setSubject(mailSubject);
+		mailDetailsObj.setEmailBodyBytes(loadEmailFile(EMAIL_PATH));
+		mailDetailsObj.setFrom(mailFrom);
+		mailDetailsObj.setSmtpProperties(parseSmtpProperties(smtpProperties));
+		mailDetailsObj.setAttachedFile(createIdBadgeService(idPersona));
+		mailDetailsObj.setAttachedFileName(createIdBadgdFileName(idPersona));
+		try {
+			return sendMailService.sendHtml(mailDetailsObj);
+		} catch (SendMailServiceException e) {
+			throw new IdBadgeServiceException(e);
+		}
+	}
+	
+	private Properties parseSmtpProperties(String str) {
+		Properties properties = new Properties();
+		List<String> listProperties = Arrays.asList(str.split("\\;"));
+		for (String s : listProperties) {
+			String[] arr = s.split("\\:");
+			properties.put(arr[0], arr[1]);
+		}
+		return properties;
+	}
+	
+	private byte[] loadEmailFile(String emailPAth) throws IdBadgeServiceException {
+		try (InputStream is = getClass().getResourceAsStream(emailPAth)) {
+			return is.readAllBytes();
+		} catch (IOException e) {
+			log.error(e.getMessage());
+			throw new IdBadgeServiceException(e);
+		}
+	}
+    
+    
+    private ImageData getPersonalPhotoImageData(Integer idPersona) throws IdBadgeServiceException {
         List<ImagenDto> imagensList = imagenService.findByIdPersona(idPersona);
         ImagenDto imagenFotoPersonal = imagensList.stream()
                 .filter(i -> i.getIdTipoImagenDocumento().equals(tipoImagenDocumentoFotoPersonal.idTipoImagen()))
@@ -162,8 +266,8 @@ public class IdBadgeServiceImpl implements IdBadgeService {
         try {
             imagenFotoPersonalByteArray = imagenService.get(imagenFotoPersonal.getUuid());
         } catch (ServiceException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new IdBadgeServiceException(e.getMessage());
         }
         
         return ImageDataFactory.create(imagenFotoPersonalByteArray);

@@ -125,6 +125,11 @@
 			<version>9.0.0</version> <!-- Use the latest 9.x version available -->
 			<type>pom</type>
 		</dependency>
+		<!-- pom.xml -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
