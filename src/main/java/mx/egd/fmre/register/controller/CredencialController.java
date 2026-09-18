@@ -12,9 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import mx.egd.fmre.register.dto.SendIdbadgeResponse;
 import mx.egd.fmre.register.service.IdBadgeService;
 import mx.egd.fmre.register.service.exceptions.AficionadoServiceException;
-import mx.egd.fmre.register.service.exceptions.CredencialControllerSeviceException;
+import mx.egd.fmre.register.service.exceptions.IdBadgeServiceException;
 import mx.egd.fmre.register.service.exceptions.ServiceException;
 
 @RestController
@@ -37,7 +38,13 @@ public class CredencialController {
         // 2. Set the appropriate HTTP headers
         HttpHeaders headers = new HttpHeaders();
         // 'attachment' forces a download prompt, 'inline' tries to render inside the browser
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report.pdf");
+        String filename = "credencial_" + idPersona + ".pdf";
+		try {
+			filename = idBadgeService.createIdBadgdFileName(idPersona);
+		} catch (IdBadgeServiceException e) {
+			log.error(e.getMessage());
+		}
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename);
         headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(pdfBytes.length));
 
         // Optional: Helps the client know the exact file size
@@ -45,8 +52,22 @@ public class CredencialController {
 
         return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
+    
+	@GetMapping(path = "send_idbadge/{idPersona}")
+	public ResponseEntity<SendIdbadgeResponse> sendIdBadge(@PathVariable Integer idPersona) {
+		String errorMsg = "";
+		try {
+			if (idBadgeService.sendIdBadge(idPersona)) {
+				return new ResponseEntity<SendIdbadgeResponse>(new SendIdbadgeResponse(false, "OK"), HttpStatus.OK);
+			}
+		} catch (IdBadgeServiceException e) {
+			log.error(e.getMessage());
+			errorMsg = e.getMessage();
+		}
+		return new ResponseEntity<SendIdbadgeResponse>(new SendIdbadgeResponse(true, errorMsg), HttpStatus.INTERNAL_SERVER_ERROR);
+	}
 
-    @ExceptionHandler(CredencialControllerSeviceException.class)
+    @ExceptionHandler(ServiceException.class)
     public ResponseEntity<String> handleUnexpected(AficionadoServiceException ex) {
         return ResponseEntity.internalServerError().body(ex.getMessage());
     }
