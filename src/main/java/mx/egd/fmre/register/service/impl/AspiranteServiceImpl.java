@@ -34,7 +34,7 @@ public class AspiranteServiceImpl implements AspiranteService {
     private static Properties contadorEstadosNextValueProperties;
     
     @PostConstruct
-    private void init() {
+    private static void init() throws AspiranteServiceException {
         String rootPath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
         String appConfigPath = rootPath + "contador_estados_next_value.properties";
 
@@ -42,8 +42,7 @@ public class AspiranteServiceImpl implements AspiranteService {
         try (FileInputStream is = new FileInputStream(appConfigPath)){
             contadorEstadosNextValueProperties.load(is);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        	throw new AspiranteServiceException(e);
         }
     }
 

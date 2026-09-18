@@ -33,6 +33,7 @@ public class AficionadoComponentImpl implements AficionadoComponent {
     private static final String FECHA_FINAL_NO_PUEDE_SER_ANTERIOR = "La fecha final no puede ser anterior a la fecha inicial de otro aficionado vigente";
     private static final String REGISTRO_NO_SE_PUEDE_MODIFICAR = "El registro no se puede modificar luego de 5 dias de haber sido registrado";
     private static final String REGISTRO_NO_SE_PUEDE_ELIMINAR = "El aficionado ya esta cerrado, no se puede eliminar";
+    private static final String AFICIONADO_IS_NULL = "Aficionado is null";
 
     private final AficionadoRepository aficionadoRepository;
     private final ImagenRepository imagenRepository;
@@ -41,7 +42,7 @@ public class AficionadoComponentImpl implements AficionadoComponent {
     @Override
     public String validatePeriodOnAficionado(Aficionado aficionado) {
         if (aficionado == null) {
-            log.error("Aficionado is null");
+            log.error(AFICIONADO_IS_NULL);
             return AFICIONADO_ES_NULO;
         }
         LocalDate fechaInicio = aficionado.getFechaInicio();
@@ -63,12 +64,12 @@ public class AficionadoComponentImpl implements AficionadoComponent {
     @Override
     public String validateOverlaps(Aficionado aficionado) {
         if (aficionado == null) {
-            log.error("Aficionado is null");
+            log.error(AFICIONADO_IS_NULL);
             return AFICIONADO_ES_NULO;
         }
 
         if (aficionado.getIdPersona() == null) {
-            log.error("El aficionado no tiene un IDPERSONA");
+            log.error(AFICIONADO_NO_TIENE_ID_PERSONA);
             return AFICIONADO_NO_TIENE_ID_PERSONA;
         }
 
@@ -117,7 +118,7 @@ public class AficionadoComponentImpl implements AficionadoComponent {
     @Override
     public String validatePeriodForEditing(Aficionado aficionado) {
         if (aficionado == null) {
-            log.error("Aficionado is null");
+            log.error(AFICIONADO_IS_NULL);
             return AFICIONADO_ES_NULO;
         }
 
@@ -129,7 +130,7 @@ public class AficionadoComponentImpl implements AficionadoComponent {
         Integer idAficionado = aficionado.getIdAficionado();
         AficionadoEntity aficionadoEntity = aficionadoRepository.findById(idAficionado).orElse(null);
         if (aficionadoEntity == null) {
-            log.error("Aficionado is null");
+            log.error(AFICIONADO_IS_NULL);
             return AFICIONADO_ES_NULO;
         }
 
@@ -149,7 +150,7 @@ public class AficionadoComponentImpl implements AficionadoComponent {
     @Override
     public String validateDeletion(AficionadoEntity aficionadoEntity) {
         if (aficionadoEntity == null) {
-            log.error("Aficionado is null");
+            log.error(AFICIONADO_IS_NULL);
             return AFICIONADO_ES_NULO;
         }
 

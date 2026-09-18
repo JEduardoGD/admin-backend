@@ -1,7 +1,5 @@
 package mx.egd.fmre.register.controller;
 
-import java.io.IOException;
-
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,10 +17,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mx.egd.fmre.register.exception.StorageException;
-import mx.egd.fmre.register.exception.StorageFileNotFoundException;
+import mx.egd.fmre.register.exception.FileSystemStorageServiceException;
 import mx.egd.fmre.register.record.UploadResult;
-import mx.egd.fmre.register.service.StorageService;
+import mx.egd.fmre.register.service.FileSystemStorageService;
+import mx.egd.fmre.register.service.GetMimeTypeService;
+import mx.egd.fmre.register.service.exceptions.GetMimeTypeServiceException;
 
 @RestController
 @RequestMapping("file")
@@ -30,59 +29,54 @@ import mx.egd.fmre.register.service.StorageService;
 @Slf4j
 public class FileUploadController {
 
-    private final StorageService storageService;
+    private final FileSystemStorageService storageService;
+    private final GetMimeTypeService getMimeTypeService;
 
     @GetMapping("/files/{filename:.+}")
     @ResponseBody
-    public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
+	public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
 
-        Resource file = null;
-        try {
-            file = storageService.loadAsResource(filename);
-        } catch (StorageFileNotFoundException e) {
-            log.error(e.getMessage());
-            return ResponseEntity.notFound().build();
-        } catch (StorageException e) {
-            log.error(e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
+		Resource file = null;
+		try {
+			file = storageService.loadAsResource(filename);
+		} catch (FileSystemStorageServiceException e) {
+			log.error(e.getMessage());
+		}
 
-        if (file == null) {
-            return ResponseEntity.notFound().build();
-        }
+		if (file == null) {
+			return ResponseEntity.notFound().build();
+		}
 
-        String detectedType = null;
-        try {
-            detectedType = storageService.getMimeType(file.getInputStream());
-        } catch (StorageException | IOException e) {
-            log.error(e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
+		String detectedType = null;
+		try {
+			detectedType = getMimeTypeService.getDetectedType(filename);
+		} catch (GetMimeTypeServiceException e) {
+			log.error(e.getMessage());
+		}
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
-                .header(HttpHeaders.CONTENT_TYPE, detectedType).body(file);
-    }
+		return ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
+				.header(HttpHeaders.CONTENT_TYPE, detectedType).body(file);
+	}
 
-    @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
-    public ResponseEntity<UploadResult> handleFileUpload(@RequestParam MultipartFile file) {
+	@PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+	public ResponseEntity<UploadResult> handleFileUpload(@RequestParam MultipartFile file) {
 
-        String filename = null;
-        try {
-            filename = storageService.store(file);
-        } catch (StorageException e) {
-            UploadResult uploadResult =  new UploadResult(null, true, e.getMessage());
-            return new ResponseEntity<>(uploadResult, HttpStatus.OK);
-        }
+		String filename = null;
+		try {
+			filename = storageService.store(file);
+		} catch (FileSystemStorageServiceException e) {
+			log.error(e.getMessage());
+		}
 
-        UploadResult uploadResult =  new UploadResult(filename, false, null);
+		UploadResult uploadResult = new UploadResult(filename, false, null);
 
-        return new ResponseEntity<>(uploadResult, HttpStatus.OK);
-    }
+		return new ResponseEntity<>(uploadResult, HttpStatus.OK);
+	}
 
-    @ExceptionHandler(StorageFileNotFoundException.class)
-    public ResponseEntity<?> handleStorageFileNotFound(StorageFileNotFoundException exc) {
-        return ResponseEntity.notFound().build();
-    }
+	@ExceptionHandler(FileSystemStorageServiceException.class)
+	public ResponseEntity<UploadResult> handleStorageFileNotFound(FileSystemStorageServiceException exc) {
+		return ResponseEntity.notFound().build();
+	}
 
 }

@@ -20,7 +20,7 @@ public class UserinfoServiceImpl implements UserinfoService {
     private final RestClient.Builder restClientBuilder;
 
     private static final String WELL_KNOW_OPENID_CONFIGURATION = "/.well-known/openid-configuration";
-    private static final String BEARER_ = "Bearer ";
+    private static final String BEARER = "Bearer ";
     private static final String EMPTY_STRING = "";
 
     @Override
@@ -43,7 +43,7 @@ public class UserinfoServiceImpl implements UserinfoService {
         @Nullable
         UserInfo userInfo = restClient.get()
                 .uri(userinfoEndpoint)
-                .headers(headers -> headers.setBearerAuth(token.replaceAll(BEARER_, EMPTY_STRING)))
+                .headers(headers -> headers.setBearerAuth(token.replace(BEARER, EMPTY_STRING)))
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .body(UserInfo.class);

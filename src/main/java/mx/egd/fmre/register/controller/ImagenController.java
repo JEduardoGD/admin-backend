@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,10 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mx.egd.fmre.register.dto.ImagenDto;
-import mx.egd.fmre.register.exception.StorageFileNotFoundException;
-import mx.egd.fmre.register.exception.UnsupportedImageTypeException;
 import mx.egd.fmre.register.service.ImagenService;
-import mx.egd.fmre.register.service.exceptions.ServiceException;
+import mx.egd.fmre.register.service.exceptions.ImagenServiceException;
 
 @RestController
 @RequestMapping("imagen")
@@ -53,24 +52,19 @@ public class ImagenController {
 
     @GetMapping(value = "thumbnail/{uuid}", produces = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity<byte[]> thumbnail(@PathVariable String uuid) {
+    	byte[] thumbnail = null;
+    	String uuidPart = null;
         try {
-            byte[] thumbnail = imagenService.getThumbnail(uuid);
+            thumbnail = imagenService.getThumbnail(uuid);
             int extensionIndex = uuid.lastIndexOf('.');
-            String uuidPart = extensionIndex > 0 ? uuid.substring(0, extensionIndex) : uuid;
-            return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_JPEG)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"thumbnail-" + uuidPart + ".jpg\"")
-                    .body(thumbnail);
-        } catch (StorageFileNotFoundException e) {
-            log.error(e.getMessage());
-            return ResponseEntity.notFound().build();
-        } catch (UnsupportedImageTypeException e) {
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).build();
-        } catch (ServiceException e) {
-            log.error(e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
+            uuidPart = extensionIndex > 0 ? uuid.substring(0, extensionIndex) : uuid;
+        } catch (ImagenServiceException e) {
+        	log.error(e.getMessage());
+		}
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"thumbnail-" + uuidPart + ".jpg\"")
+                .body(thumbnail);
     }
 
     @GetMapping("find_by/id/{id}")
@@ -78,4 +72,9 @@ public class ImagenController {
         ImagenDto imagenDto = imagenService.findById(id);
         return new ResponseEntity<>(imagenDto, HttpStatus.OK);
     }
+
+	@ExceptionHandler(ImagenServiceException.class)
+	public ResponseEntity<byte[]> handleStorageFileNotFound(ImagenServiceException exc) {
+		return ResponseEntity.notFound().build();
+	}
 }

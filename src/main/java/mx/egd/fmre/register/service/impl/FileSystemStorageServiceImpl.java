@@ -19,14 +19,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.annotation.PostConstruct;
-import mx.egd.fmre.register.exception.StorageException;
-import mx.egd.fmre.register.exception.StorageFileNotFoundException;
-import mx.egd.fmre.register.service.StorageService;
+import mx.egd.fmre.register.exception.FileSystemStorageServiceException;
+import mx.egd.fmre.register.service.FileSystemStorageService;
 import mx.egd.fmre.register.util.MimeTypesUtil;
 import mx.egd.fmre.register.util.exception.MimeTypesUtilException;
 
 @Service
-public class FileSystemStorageService implements StorageService {
+public class FileSystemStorageServiceImpl implements FileSystemStorageService {
     
     private static final String FAILED_TO_STORE_EMPTY_FILE = "Failed to store empty file.";
     private static final String CANT_STORE_FILE_OUTSITE_DIRECTORY= "Cannot store file outside current directory.";
@@ -50,11 +49,11 @@ public class FileSystemStorageService implements StorageService {
     }
 
     @Override
-    public String store(MultipartFile file) throws StorageException {
+    public String store(MultipartFile file) throws FileSystemStorageServiceException {
         String fileName;
         try {
             if (file.isEmpty()) {
-                throw new StorageException(FAILED_TO_STORE_EMPTY_FILE);
+                throw new FileSystemStorageServiceException(FAILED_TO_STORE_EMPTY_FILE);
             }
             // Paths.get(file.getOriginalFilename())
             String uuid = UUID.randomUUID().toString();
@@ -68,36 +67,36 @@ public class FileSystemStorageService implements StorageService {
             Path destinationFile = rootLocationPath.resolve(fileName).normalize().toAbsolutePath();
             if (!destinationFile.getParent().equals(rootLocationPath.toAbsolutePath())) {
                 // This is a security check
-                throw new StorageException(CANT_STORE_FILE_OUTSITE_DIRECTORY);
+                throw new FileSystemStorageServiceException(CANT_STORE_FILE_OUTSITE_DIRECTORY);
             }
             try (InputStream inputStream = file.getInputStream()) {
                 Files.copy(inputStream, destinationFile, StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (IOException e) {
-            throw new StorageException(FAILED_TO_STORE_FILE, e);
+            throw new FileSystemStorageServiceException(FAILED_TO_STORE_FILE, e);
         }
         return fileName;
     }
     
     @Override
-    public String getExtension(InputStream is) throws StorageException {
+    public String getExtension(InputStream is) throws FileSystemStorageServiceException {
         String detectedType;
         String extension;
         try {
             detectedType = getMimeType(is);
             extension = MimeTypesUtil.getExtension(detectedType);
         } catch (MimeTypesUtilException e) {
-            throw new StorageException(e);
+            throw new FileSystemStorageServiceException(e);
         }
         return extension;
     }
     
     @Override
-    public String getMimeType(InputStream is) throws StorageException {
+    public String getMimeType(InputStream is) throws FileSystemStorageServiceException {
         try {
             return TIKA.detect(is);
         } catch (IOException e) {
-            throw new StorageException(e);
+            throw new FileSystemStorageServiceException(e);
         }
     }
 
@@ -107,23 +106,23 @@ public class FileSystemStorageService implements StorageService {
     }
 
     @Override
-    public Resource loadAsResource(String filename) throws StorageException {
+    public Resource loadAsResource(String filename) throws FileSystemStorageServiceException {
         try {
             Path path = load(filename);
             Resource resource = new UrlResource(path.toUri());
             if (resource.exists() || resource.isReadable()) {
                 return resource;
             } else {
-                throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + filename);
+                throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + filename);
 
             }
         } catch (MalformedURLException e) {
-            throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + filename, e);
+            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + filename, e);
         }
     }
 
     @Override
-    public Resource loadAsResourceByUuid(String uuid) throws StorageException {
+    public Resource loadAsResourceByUuid(String uuid) throws FileSystemStorageServiceException {
         String uuidPart = extractUuidPart(uuid);
         Path rootLocationPath = Paths.get(this.rootLocation).toAbsolutePath().normalize();
 
@@ -145,19 +144,19 @@ public class FileSystemStorageService implements StorageService {
                 }
             }
         } catch (IOException e) {
-            throw new StorageException(CULD_NOT_READ_FILE + uuid, e);
+            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + uuid, e);
         }
 
-        throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + uuid);
+        throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + uuid);
     }
 
-    private String extractUuidPart(String uuid) throws StorageFileNotFoundException {
+    private String extractUuidPart(String uuid) throws FileSystemStorageServiceException {
         if (uuid == null || uuid.isBlank()) {
-            throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + uuid);
+            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + uuid);
         }
         String part = uuid.trim();
         if (part.contains("/") || part.contains("\\") || part.contains("..")) {
-            throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + uuid);
+            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + uuid);
         }
         int dot = part.lastIndexOf('.');
         if (dot > 0) {
@@ -166,7 +165,7 @@ public class FileSystemStorageService implements StorageService {
         try {
             UUID.fromString(part);
         } catch (IllegalArgumentException e) {
-            throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + uuid, e);
+            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + uuid, e);
         }
         return part;
     }
@@ -175,15 +174,15 @@ public class FileSystemStorageService implements StorageService {
         return Files.isRegularFile(path) && Files.isReadable(path);
     }
 
-    private Resource toUrlResource(Path file, String nameForError) throws StorageException {
+    private Resource toUrlResource(Path file, String nameForError) throws FileSystemStorageServiceException {
         try {
             Resource resource = new UrlResource(file.toUri());
             if (resource.exists() && resource.isReadable()) {
                 return resource;
             }
-            throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + nameForError);
+            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + nameForError);
         } catch (MalformedURLException e) {
-            throw new StorageFileNotFoundException(CULD_NOT_READ_FILE + nameForError, e);
+            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + nameForError, e);
         }
     }
 }
