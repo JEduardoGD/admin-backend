@@ -13,8 +13,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Configuration
 @EnableWebSecurity
+@Slf4j
 public class SecurityConfig {
     
     @Value("${spring.frontUrl}")
@@ -22,6 +25,12 @@ public class SecurityConfig {
     
     @Value("${enpoint.open}")
     private String endpointOpen;
+    
+    @Value("${hola}")
+    private String hola;
+    
+    @Value("${mundo}")
+    private String mundo;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

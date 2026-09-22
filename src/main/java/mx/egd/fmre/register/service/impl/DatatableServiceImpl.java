@@ -26,7 +26,7 @@ public class DatatableServiceImpl implements DatatableService {
 
     @Override
     public DataTableResponse get(QueryObj queryObj) {
-        Pageable pageable = PageRequest.of(0, 10/* , Sort.by("registrationDate").descending() */);
+        Pageable pageable = PageRequest.of(0, 100/* , Sort.by("registrationDate").descending() */);
         List<PersonaEntity> personaList = personaRepository.searchByTerm(queryObj.search().value(), pageable);
         return processList(queryObj, personaList);
     }

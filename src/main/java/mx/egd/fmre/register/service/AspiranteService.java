@@ -15,6 +15,6 @@ public interface AspiranteService {
 
     List<Aspirante> findByPersona(Persona persona) throws AspiranteServiceException;
 
-    Integer calculateNextEstadoContador(EstadoEntity estado);
+    Integer calculateNextEstadoContador(EstadoEntity estado) throws AspiranteServiceException;
 
 }

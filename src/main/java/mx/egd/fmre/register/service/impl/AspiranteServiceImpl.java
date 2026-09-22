@@ -1,14 +1,11 @@
 package mx.egd.fmre.register.service.impl;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import mx.egd.fmre.register.dto.Aspirante;
 import mx.egd.fmre.register.dto.Estado;
@@ -23,6 +20,8 @@ import mx.egd.fmre.register.persistence.repository.AspiranteRepository;
 import mx.egd.fmre.register.service.AspiranteService;
 import mx.egd.fmre.register.service.EstadoService;
 import mx.egd.fmre.register.service.exceptions.AspiranteServiceException;
+import mx.egd.fmre.register.util.FileUtil;
+import mx.egd.fmre.register.util.exception.FileUtilException;
 
 @Service
 @RequiredArgsConstructor
@@ -31,21 +30,8 @@ public class AspiranteServiceImpl implements AspiranteService {
     private final AspiranteRepository aspiranteRepository;
     private final EstadoService estadoService;
     
-    private static Properties contadorEstadosNextValueProperties;
+    private static final String CONTADOR_ESTADOS_NEXT_VALUE_FILE_PROPERTIES = "contador_estados_next_value.properties";
     
-    @PostConstruct
-    private static void init() throws AspiranteServiceException {
-        String rootPath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
-        String appConfigPath = rootPath + "contador_estados_next_value.properties";
-
-        contadorEstadosNextValueProperties = new Properties();
-        try (FileInputStream is = new FileInputStream(appConfigPath)){
-            contadorEstadosNextValueProperties.load(is);
-        } catch (IOException e) {
-        	throw new AspiranteServiceException(e);
-        }
-    }
-
     @Override
     public Aspirante save(Aspirante aspirante) throws AspiranteServiceException {
         if(aspirante == null) {
@@ -86,7 +72,13 @@ public class AspiranteServiceImpl implements AspiranteService {
     }
     
     @Override
-    public Integer calculateNextEstadoContador(EstadoEntity estado) {
+    public Integer calculateNextEstadoContador(EstadoEntity estado) throws AspiranteServiceException {
+        Properties contadorEstadosNextValueProperties;
+        try {
+            contadorEstadosNextValueProperties = FileUtil.loadFromResources(CONTADOR_ESTADOS_NEXT_VALUE_FILE_PROPERTIES);
+        } catch (FileUtilException e) {
+            throw new AspiranteServiceException(e);
+        }
         Integer currentInteger = aspiranteRepository.getCurrentInteger(estado);
         if (currentInteger != null) {
             return currentInteger.intValue() + 1;
