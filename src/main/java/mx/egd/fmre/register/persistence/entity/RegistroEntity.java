@@ -28,7 +28,7 @@ public class RegistroEntity implements Serializable {
     private Integer regId;
 
     @ManyToOne
-    @JoinColumn(name = "fk_afiliados", nullable = false)
+    @JoinColumn(name = "fk_afiliados", nullable = true)
     private AfiliadoEntity afiliado;
 
     @Column(name = "Institucion", nullable = false, length = 20)

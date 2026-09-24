@@ -38,4 +38,4 @@ build/
 maven_test.bat
 compile.sh
 run.sh
-
+db/backups/**

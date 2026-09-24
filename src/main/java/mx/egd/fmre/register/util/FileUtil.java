@@ -11,7 +11,7 @@ public abstract class FileUtil {
         Properties props = new Properties();
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         try (InputStream is = classloader.getResourceAsStream(fileName)) {
-
+            props.load(is);
         } catch (IOException e) {
             throw new FileUtilException(e);
         }

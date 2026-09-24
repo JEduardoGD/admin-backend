@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class DatatableServiceImpl implements DatatableService {
 
     @Override
     public DataTableResponse get(QueryObj queryObj) {
-        Pageable pageable = PageRequest.of(0, 100/* , Sort.by("registrationDate").descending() */);
+        Pageable pageable = PageRequest.of(0, 20 , Sort.by("idPersona").descending());
         List<PersonaEntity> personaList = personaRepository.searchByTerm(queryObj.search().value(), pageable);
         return processList(queryObj, personaList);
     }

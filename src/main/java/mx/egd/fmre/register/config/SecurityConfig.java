@@ -26,12 +26,6 @@ public class SecurityConfig {
     @Value("${enpoint.open}")
     private String endpointOpen;
     
-    @Value("${hola}")
-    private String hola;
-    
-    @Value("${mundo}")
-    private String mundo;
-
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http

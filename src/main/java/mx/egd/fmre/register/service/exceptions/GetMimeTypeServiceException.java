@@ -3,6 +3,7 @@ package mx.egd.fmre.register.service.exceptions;
 import java.io.IOException;
 
 import mx.egd.fmre.register.exception.FileSystemStorageServiceException;
+import mx.egd.fmre.register.util.exception.FileInputUtilException;
 
 public class GetMimeTypeServiceException extends ServiceException {
 
@@ -18,4 +19,8 @@ public class GetMimeTypeServiceException extends ServiceException {
 	public GetMimeTypeServiceException(IOException e) {
 		super(e);
 	}
+
+    public GetMimeTypeServiceException(FileInputUtilException e) {
+        super(e);
+    }
 }
