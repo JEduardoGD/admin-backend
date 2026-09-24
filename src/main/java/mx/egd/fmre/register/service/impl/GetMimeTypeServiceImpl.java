@@ -12,11 +12,13 @@ import mx.egd.fmre.register.exception.FileSystemStorageServiceException;
 import mx.egd.fmre.register.service.FileSystemStorageService;
 import mx.egd.fmre.register.service.GetMimeTypeService;
 import mx.egd.fmre.register.service.exceptions.GetMimeTypeServiceException;
+import mx.egd.fmre.register.util.FileInputUtil;
+import mx.egd.fmre.register.util.exception.FileInputUtilException;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class GetMimeTypeServiceImpl implements GetMimeTypeService {
+public class GetMimeTypeServiceImpl extends FileInputUtil implements GetMimeTypeService {
 
 	private final FileSystemStorageService storageService;
 
@@ -32,13 +34,12 @@ public class GetMimeTypeServiceImpl implements GetMimeTypeService {
 		}
 
 		try (InputStream inputStream = resouce.getInputStream()) {
-			return storageService.getMimeType(inputStream);
-		} catch (FileSystemStorageServiceException e) {
-			log.error(e.getMessage());
-			throw new GetMimeTypeServiceException(e);
+			return getMimeType(inputStream);
 		} catch (IOException e1) {
 			log.error(e1.getMessage());
 			throw new GetMimeTypeServiceException(e1);
-		}
+		} catch (FileInputUtilException e) {
+		    throw new GetMimeTypeServiceException(e);
+        }
 	}
 }

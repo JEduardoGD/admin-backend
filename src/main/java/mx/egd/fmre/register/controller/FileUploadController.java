@@ -36,14 +36,14 @@ public class FileUploadController {
     @ResponseBody
 	public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
 
-		Resource file = null;
+		Resource resource = null;
 		try {
-			file = storageService.loadAsResource(filename);
+		    resource = storageService.loadAsResource(filename);
 		} catch (FileSystemStorageServiceException e) {
 			log.error(e.getMessage());
 		}
 
-		if (file == null) {
+		if (resource == null) {
 			return ResponseEntity.notFound().build();
 		}
 
@@ -55,8 +55,8 @@ public class FileUploadController {
 		}
 
 		return ResponseEntity.ok()
-				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
-				.header(HttpHeaders.CONTENT_TYPE, detectedType).body(file);
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+				.header(HttpHeaders.CONTENT_TYPE, detectedType).body(resource);
 	}
 
 	@PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })

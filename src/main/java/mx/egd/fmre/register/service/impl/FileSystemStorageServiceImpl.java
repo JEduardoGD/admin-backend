@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
-import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -21,11 +20,11 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.annotation.PostConstruct;
 import mx.egd.fmre.register.exception.FileSystemStorageServiceException;
 import mx.egd.fmre.register.service.FileSystemStorageService;
-import mx.egd.fmre.register.util.MimeTypesUtil;
-import mx.egd.fmre.register.util.exception.MimeTypesUtilException;
+import mx.egd.fmre.register.util.FileInputUtil;
+import mx.egd.fmre.register.util.exception.FileInputUtilException;
 
 @Service
-public class FileSystemStorageServiceImpl implements FileSystemStorageService {
+public class FileSystemStorageServiceImpl extends FileInputUtil implements FileSystemStorageService {
     
     private static final String FAILED_TO_STORE_EMPTY_FILE = "Failed to store empty file.";
     private static final String CANT_STORE_FILE_OUTSITE_DIRECTORY= "Cannot store file outside current directory.";
@@ -40,8 +39,6 @@ public class FileSystemStorageServiceImpl implements FileSystemStorageService {
     private String uploadPath;
     
     private String rootLocation;
-    
-    private static final  Tika TIKA = new Tika();
     
     @PostConstruct
     private void init() {
@@ -58,7 +55,12 @@ public class FileSystemStorageServiceImpl implements FileSystemStorageService {
             // Paths.get(file.getOriginalFilename())
             String uuid = UUID.randomUUID().toString();
             // Detect the MIME type (e.g., "image/jpeg")
-            String extension = getExtension(file.getInputStream());
+            String extension;
+            try {
+                extension = getExtension(file.getInputStream());
+            } catch (FileInputUtilException e) {
+                throw new FileSystemStorageServiceException(e);
+            }
             
             fileName = uuid + extension;
             
@@ -78,6 +80,7 @@ public class FileSystemStorageServiceImpl implements FileSystemStorageService {
         return fileName;
     }
     
+    /*
     @Override
     public String getExtension(InputStream is) throws FileSystemStorageServiceException {
         String detectedType;
@@ -104,11 +107,12 @@ public class FileSystemStorageServiceImpl implements FileSystemStorageService {
     public Path load(String filename) {
         return Paths.get(this.rootLocation).resolve(filename);
     }
+    */
 
     @Override
     public Resource loadAsResource(String filename) throws FileSystemStorageServiceException {
         try {
-            Path path = load(filename);
+            Path path = load(this.rootLocation, filename);
             Resource resource = new UrlResource(path.toUri());
             if (resource.exists() || resource.isReadable()) {
                 return resource;
@@ -123,17 +127,30 @@ public class FileSystemStorageServiceImpl implements FileSystemStorageService {
 
     @Override
     public Resource loadAsResourceByUuid(String uuid) throws FileSystemStorageServiceException {
-        String uuidPart = extractUuidPart(uuid);
+        String uuidPart;
+        try {
+            uuidPart = extractUuidPart(uuid);
+        } catch (FileInputUtilException e) {
+            throw new FileSystemStorageServiceException(e);
+        }
         Path rootLocationPath = Paths.get(this.rootLocation).toAbsolutePath().normalize();
 
         Path requested = rootLocationPath.resolve(uuid).normalize().toAbsolutePath();
         if (requested.getParent().equals(rootLocationPath) && isReadableFile(requested)) {
-            return toUrlResource(requested, uuid);
+            try {
+                return toUrlResource(requested, uuid);
+            } catch (FileInputUtilException e) {
+                throw new FileSystemStorageServiceException(e);
+            }
         }
 
         Path withoutExtension = rootLocationPath.resolve(uuidPart).normalize().toAbsolutePath();
         if (withoutExtension.getParent().equals(rootLocationPath) && isReadableFile(withoutExtension)) {
-            return toUrlResource(withoutExtension, uuidPart);
+            try {
+                return toUrlResource(withoutExtension, uuidPart);
+            } catch (FileInputUtilException e) {
+                throw new FileSystemStorageServiceException(e);
+            }
         }
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(rootLocationPath, uuidPart + ".*")) {
@@ -143,46 +160,10 @@ public class FileSystemStorageServiceImpl implements FileSystemStorageService {
                     return toUrlResource(normalized, path.getFileName().toString());
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | FileInputUtilException e) {
             throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + uuid, e);
         }
 
         throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + uuid);
-    }
-
-    private String extractUuidPart(String uuid) throws FileSystemStorageServiceException {
-        if (uuid == null || uuid.isBlank()) {
-            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + uuid);
-        }
-        String part = uuid.trim();
-        if (part.contains("/") || part.contains("\\") || part.contains("..")) {
-            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + uuid);
-        }
-        int dot = part.lastIndexOf('.');
-        if (dot > 0) {
-            part = part.substring(0, dot);
-        }
-        try {
-            UUID.fromString(part);
-        } catch (IllegalArgumentException e) {
-            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + uuid, e);
-        }
-        return part;
-    }
-
-    private boolean isReadableFile(Path path) {
-        return Files.isRegularFile(path) && Files.isReadable(path);
-    }
-
-    private Resource toUrlResource(Path file, String nameForError) throws FileSystemStorageServiceException {
-        try {
-            Resource resource = new UrlResource(file.toUri());
-            if (resource.exists() && resource.isReadable()) {
-                return resource;
-            }
-            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + nameForError);
-        } catch (MalformedURLException e) {
-            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + nameForError, e);
-        }
     }
 }

@@ -18,13 +18,12 @@ import mx.egd.fmre.register.dto.MailDetaislObj;
 import mx.egd.fmre.register.service.FileSystemStorageService;
 import mx.egd.fmre.register.service.SendMailService;
 import mx.egd.fmre.register.service.exceptions.SendMailServiceException;
+import mx.egd.fmre.register.util.FileInputUtil;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class SendMailServiceImpl implements SendMailService {
-
-	private final FileSystemStorageService storageService;
+public class SendMailServiceImpl extends FileInputUtil implements SendMailService {
 
 	@Override
 	public boolean sendHtml(MailDetaislObj mailDetailsObj) throws SendMailServiceException {
@@ -43,7 +42,7 @@ public class SendMailServiceImpl implements SendMailService {
 
 			String mimeType = "application/octet-stream";
 			try (java.io.InputStream inputStream = new ByteArrayInputStream(mailDetailsObj.getAttachedFile())) {
-				mimeType = storageService.getMimeType(inputStream);
+				mimeType = getMimeType(inputStream);
 			}
 
 			ByteArrayDataSource byteArrayDataSource = new ByteArrayDataSource(mailDetailsObj.getAttachedFile(), mimeType);
