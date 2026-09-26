@@ -14,7 +14,6 @@ import mx.egd.fmre.register.dto.TipoAfiliacion;
 import mx.egd.fmre.register.dto.TipoDatoContacto;
 import mx.egd.fmre.register.record.TipoImagen;
 import mx.egd.fmre.register.service.EstadoService;
-import mx.egd.fmre.register.service.MigracionService;
 import mx.egd.fmre.register.service.TipoAfiliacionService;
 import mx.egd.fmre.register.service.TipoDatoContactoService;
 import mx.egd.fmre.register.service.TipoImagenService;
@@ -29,7 +28,6 @@ public class StaticCatalogController {
     private final EstadoService estadoService;
     private final TipoAfiliacionService tipoAfiliacionService;
     private final TipoDatoContactoService tipoDatoContactoService;
-    private final MigracionService migracionService;
 	
 	@GetMapping("tipo_imagen")
     public ResponseEntity<List<TipoImagen>> listAll(){
@@ -73,9 +71,11 @@ public class StaticCatalogController {
         return new ResponseEntity<>(tipoDatoContactoList, HttpStatus.OK);
     }
     
+    /*
     @GetMapping("start_migration")
     public ResponseEntity<Estado> startMigration() {
         migracionService.migrate();
         return new ResponseEntity<>(new Estado(), HttpStatus.OK);
     }
+    */
 }

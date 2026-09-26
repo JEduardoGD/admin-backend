@@ -31,9 +31,11 @@ public interface PersonaRepository extends JpaRepository<PersonaEntity, Integer>
     
     @Query("""
             SELECT p
-            FROM PersonaEntity p
+            FROM PersonaEntity p 
             WHERE
-                 p.nombre LIKE %:term%
+                 p.nombre LIKE %:term% OR
+                 p.primerApellido LIKE %:term% OR
+                 p.segundoApellido LIKE %:term%
             """)
     List<PersonaEntity> searchByTerm(String term, Pageable pageable);
 }
