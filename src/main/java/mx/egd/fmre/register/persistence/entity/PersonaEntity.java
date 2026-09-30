@@ -1,6 +1,7 @@
 package mx.egd.fmre.register.persistence.entity;
 
-import java.util.Date;
+import java.io.Serializable;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,8 +16,13 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @Table(name = "T_PERSONA")
-public class PersonaEntity {
-    @Id
+public class PersonaEntity implements Serializable {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -7563317433833858161L;
+
+	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "IDPERSONA")
     private Integer idPersona;
@@ -31,5 +37,5 @@ public class PersonaEntity {
     private String segundoApellido;
 
     @Column(name = "FECNAC")
-    private Date fecNac;
+    private LocalDate fecNac;
 }

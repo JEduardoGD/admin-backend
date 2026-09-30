@@ -34,3 +34,11 @@ build/
 
 ###
 .env
+.grok/
+maven_test.bat
+compile.sh
+run.sh
+db/backups/**
+docker_info.txt
+db/dedupe_personas_20260925.sql
+

@@ -1,5 +1,8 @@
 spring:
     frontUrl: "${FRONT_URL}"
+    files:
+        location: ${FILES_LOCATION}
+        upload_path: "${UPLOAD_PATH}"
     application:
         name: Register
     config:
@@ -17,3 +20,31 @@ spring:
         hibernate:
             naming:
                 physical-strategy: "org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl"
+        show-sql: true
+    servlet:
+        multipart:
+            max-file-size: 15MB
+            max-request-size: 15MB
+    mail:
+        host: "${MAIL_HOST}"
+        port: "${MAIL_PORT}"
+        username: "${MAIL_USERNAME}"
+        password: "${MAIL_PASSWORD}"
+        properties:
+            mail:
+                smtp:
+                   auth: true
+                   starttls:
+                       enable: true
+mail:
+    bcc: "${MAIL_BCC}"
+    subject: "${MAIL_SUBJECT}"
+    from: "${MAIL_FROM}"
+    smtp_properties: "${MAIL_SMTP_PROPERTIES}"
+server:
+    tomcat:
+        max-swallow-size: -1
+postalia:
+    api: "${POSTALIA_API}"
+enpoint:
+    open: ${OPEN_REQUEST_MATCHERS}

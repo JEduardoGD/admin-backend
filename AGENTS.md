@@ -1,37 +1,182 @@
 # AGENTS.md
 
+Instructions for agents working in this repository. Do not duplicate the README.
+
 ## Stack
 
 - Spring Boot 4.1.0, Java 21, Maven wrapper (Apache Maven 3.9.16)
-- MySQL 8.0 (Docker Compose), OAuth2 JWT resource server (Cognito)
-- Lombok, springdoc-openapi (Swagger), spring-boot-devtools
+- Single-module Maven artifact `mx.egd.fmre:Register`, root package `mx.egd.fmre.register`
+- MySQL 8.0 via Docker Compose (`db/compose.yaml`), JDBC driver `mysql-connector-java` 8.0.33
+- OAuth2 JWT resource server (AWS Cognito) — still wired; see Security
+- Lombok, MapStruct 1.6.3, springdoc-openapi 2.8.3, spring-boot-devtools
+- Apache Tika 3.0.0 (MIME detection), Thumbnailator 0.4.21 (JPEG thumbnails)
+- iText Core 9.0.0 (PDF generation for ID badges)
+- `spring-boot-starter-mail` for SMTP email delivery
+- `spring-boot-starter-restclient` for the Postalia postal-code API
 
 ## Developer commands
 
 ```bash
-docker compose up -d          # start MySQL (required before run)
-./mvnw spring-boot:run        # dev server (devtools hot-restart on classpath changes)
-./mvnw test                   # run all tests
-./mvnw test -Dtest=FooTest    # run a single test class
+docker compose -f db/compose.yaml --env-file ./.env up -d   # start MySQL (run from repo root; required before run)
+./mvnw spring-boot:run         # dev server (devtools hot-restart on classpath changes)
+./mvnw compile                 # regenerate MapStruct impls after mapper changes
+./mvnw test                    # all tests (currently only RegisterApplicationTests context-loads)
+./mvnw test -Dtest=FooTest     # a single test class
 ```
+
+Default HTTP port is 8080. Swagger UI: `/swagger-ui.html`. OpenAPI: `/v3/api-docs`.
+
+Multipart uploads are capped at 15MB (`spring.servlet.multipart` + Tomcat `max-swallow-size: -1`). `GlobalExceptionHandler` maps `MaxUploadSizeExceededException` to HTTP 413.
 
 ## Environment
 
-- `.env` at the repo root supplies all runtime config (gitignored, required).
+- `.env` at the repo root is gitignored and required at runtime.
 - Loaded via `spring.config.import: "optional:file:.env[.properties]"` — no copies needed.
-- CORS allows only the origin in `FRONT_URL`.
+- Keys: `DB_ROOT_PASSWORD`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_URL`, `AUTH_AUTHORITY`, `FRONT_URL`, `FILES_LOCATION`, `UPLOAD_PATH`, `POSTALIA_API`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_BCC`, `MAIL_SUBJECT`, `MAIL_FROM`, `MAIL_SMTP_PROPERTIES`.
+- CORS origin is only `FRONT_URL` (bound as `spring.frontUrl`). Never hardcode origins; inject `@Value("${spring.frontUrl}")`.
+- File store is `FILES_LOCATION` + `UPLOAD_PATH` (bound as `spring.files.location` / `spring.files.upload_path`). Uploads are stored as UUID filenames; do not hardcode a local upload directory.
+- `POSTALIA_API` is a bearer token for `https://postalia.com.mx` (`PostaliaRestClientConfig`). Do not change the base URL without checking that config.
+- If `java -version` fails or `JAVA_HOME` is unset, do not assume Java is missing. Ask the user for the JDK location (this project needs JDK 21) and `export JAVA_HOME=<that path>` before running `./mvnw`.
 
-## Architecture
+## Layering
 
-- Single-module Maven project, root package `mx.egd.fmre.register`.
-- Security: all endpoints except `/api/public/**`, `/v3/api-docs/**`, and `/swagger-ui/**` require JWT auth (`SecurityConfig.java`).
-- Swagger UI at `/swagger-ui.html`, API docs at `/v3/api-docs`.
-- Controllers currently return stub data — no repository/service layer yet.
-- `Persona` is a Lombok DTO (`@Data + @AllArgsConstructor`), not a JPA entity (no `@Entity`).
-- IDE: enable Lombok annotation processing in your IDE settings.
+Controller → service interface → `service.impl` → Spring Data repository + mapper. Do not put persistence or mapping logic in controllers.
 
-## Conventions
+Domain validation that is not persistence belongs in `component/` + `component/impl` (examples: `AfiliacionValidatorComponent`, `AficionadoComponent` — the latter also handles aficionado capture rules like CERTIFICADO image creation). Services call the component and throw `service.exceptions.*`.
 
-- Follow existing Spring Boot conventions — `@Configuration`, `@RestController`, `@Service`, etc.
-- Add new endpoints under `/api/public/**` if they must skip auth.
-- Use `spring.frontUrl` property (via `@Value`) for CORS origins, not hardcoded URLs.
+```
+src/main/java/mx/egd/fmre/register/
+├── component/ + component/impl/   # domain validators (not Spring Data); IdBadgeComponent (PDF generation)
+├── component/exception/           # ComponentException, IdBadgeComponentException
+├── config/                        # SecurityConfig (JWT + CORS), PostaliaRestClientConfig
+├── controller/                    # REST, one class per resource; GlobalExceptionHandler; CredencialController
+├── dto/                           # Lombok request/response DTOs (not JPA); MailDetaislObj, ImagenDto
+├── dto/datatable/                 # DataTables protocol (QueryObj, DataTableResponse, DatatableObj)
+├── dto/postalia/                  # Postalia JSON (Localizacion, Colonia)
+├── exception/                     # RegisterException (base), FileSystemStorageServiceException, UnsupportedImageTypeException
+├── mapper/                        # PersonaMapper (manual); EstadoMapper, TipoAfiliacionEntityMapper (MapStruct)
+├── mapper/to_dto/                 # MapStruct entity → DTO/record (Aficionado, Aspirante, Domicilio, Imagen, TipoImagenDocumento, TipoDatoContacto)
+├── mapper/to_entity/              # MapStruct DTO → entity (Aficionado, Aspirante, DatoContacto, Domicilio, Imagen)
+├── persistence/entity/            # JPA entities; ElegibleIdBadgeEntity (maps V_ELEGIBLE_IDBADGE view)
+├── persistence/repository/        # Spring Data JPA; ElegibleIdBadgeRepository
+├── record/                        # TipoImagen, UserInfo, OpenIdConfiguration, UploadResult (filename, uploadError, frontError)
+├── service/ + service/impl/       # + IdBadgeService, ElegibleIdBadgeService, SendMailService, GetMimeTypeService, FileSystemStorageService
+├── service/exceptions/            # ServiceException + per-resource subclasses (Address, Afiliacion, Aficionado, Aspirante, IdBadge, SendMail, GetMimeType, Imagen, CredencialControllerSevice)
+├── util/                          # DateTimeUtil, MimeTypesUtil, StaticValues, DistinctByKey, IdBadgeComponentStaticValues
+└── util/exception/                # UtilException, MimeTypesUtilException
+```
+
+## Security
+
+`SecurityConfig` uses `.anyRequest().authenticated()` — all requests require a valid JWT bearer token by default. CSRF disable is currently commented out. CORS allows GET/POST/PUT/DELETE/OPTIONS with `Authorization`, `Cache-Control`, `Content-Type`, and `allowCredentials`.
+
+Active public matchers (skip auth): `/api/public/**`, `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html`, `/credencial/**`. There is no `/api` prefix on existing controllers. Paths are resource names at the root (`/persona`, `/domicilio`, `/afiliacion`, `/aspirante`, `/aficionado`, `/datocontacto`, `/sumary`, `/static_catalog/...`, `/file`, `/imagen`, `/address`, `/credencial`).
+
+New skip-auth endpoints go under `/api/public/**` **or** extend the matcher list in `SecurityConfig` the same way `/credencial/**` was added.
+
+## HTTP surface
+
+| Method | Path | Notes |
+| ------ | ---- | ----- |
+| POST | `/persona` | Create; service nulls `idPersona` |
+| POST | `/persona/update` | Update |
+| GET | `/persona` | Search by `nombre`, `primerApellido`, `segundoApellido`, `fecnac` |
+| GET | `/persona/{idPersona}` | By id |
+| POST | `/domicilio` | Create; controller nulls `idDomicilio`. Reads `Authorization` header (unused today) |
+| POST | `/domicilio/update` | Update; returns `null` if `idDomicilio` is missing |
+| GET | `/domicilio/find_by/idpersona/{idPersona}` | List by person |
+| POST | `/afiliacion` | Create; controller nulls `idAfiliacion` |
+| PUT | `/afiliacion` | Update; 400 if `idAfiliacion` is missing or `<= 0` |
+| GET | `/afiliacion/find_by/id_afiliacion/{idAfiliacion}` | By id |
+| GET | `/afiliacion/find_by/id_persona/{idPersona}` | List by person; 400 if `idPersona <= 0` |
+| POST | `/aspirante` | Create; controller nulls `idAspirante` |
+| PUT | `/aspirante` | Update; 400 if `idAspirante` is missing or `<= 0` |
+| GET | `/aspirante/find_by/id_aspirante/{idAspirante}` | By id |
+| GET | `/aspirante/find_by/id_persona/{idPersona}` | List by person; 400 if `idPersona <= 0` |
+| POST | `/aficionado` | Create; controller nulls `idAficionado`; runs `AficionadoComponent` validations; if no `idImagen` but `uuid` present, creates a CERTIFICADO `T_IMAGEN` row linked to the persona |
+| PUT | `/aficionado` | Update; 400 if `idAficionado` is missing or `<= 0` |
+| GET | `/aficionado/find_by/id_aficionado/{idAficionado}` | By id |
+| DELETE | `/aficionado/{idAficionado}` | Soft close: sets `fechaFin` to today and saves; 400 if `idAficionado <= 0`; 500 with message if not found or already closed |
+| GET | `/aficionado/find_by/id_persona/{idPersona}` | List by person; 400 if `idPersona <= 0` |
+| POST | `/datocontacto` | Create; controller nulls `idDatoContacto` |
+| PUT | `/datocontacto` | Update; 400 if `idDatoContacto` is missing or `<= 0` |
+| GET | `/datocontacto/find_by/id/{idDatoContacto}` | By id; 404 if not found |
+| GET | `/datocontacto/find_by/idpersona/{idPersona}` | List by person; 400 if `idPersona <= 0` |
+| DELETE | `/datocontacto/{idDatoContacto}` | Soft delete; 400 if `idDatoContacto <= 0` |
+| POST | `/imagen` | Create; controller nulls `idImagen`. Metadata only — file bytes go through `/file` |
+| POST | `/imagen/update` | Update; returns `null` if `idImagen` is missing |
+| GET | `/imagen/find_by/idpersona/{idPersona}` | List by person |
+| GET | `/imagen/find_by/id/{id}` | By id |
+| GET | `/imagen/thumbnail/{uuid}` | JPEG thumbnail (128px) of the stored file |
+| POST | `/file` | Multipart upload; returns `UploadResult` (`filename` is a UUID) |
+| GET | `/file/files/{filename}` | Download stored file; `Content-Type` from Tika |
+| GET | `/address/by_cp/{cp}` | Postalia lookup → `Localizacion` (colonias). Maps 401/404/429 from the remote API |
+| GET | `/credencial/{idPersona}` | Generate and download ID badge PDF |
+| GET | `/credencial/send_idbadge/{idPersona}` | Send ID badge via email |
+| POST | `/sumary` | DataTables listing of personas (`QueryObj` in, `DataTableResponse` out) |
+| GET | `/static_catalog/tipo_imagen` | Active image-document types |
+| GET | `/static_catalog/tipo_imagen/for_persona` | Types for persona (`StaticValues.FOR_PERSONA`) |
+| GET | `/static_catalog/tipo_imagen/for_afiliacion` | Types for afiliación (`StaticValues.FOR_AFILIACION`) |
+| GET | `/static_catalog/estado` | All Mexican states (`C_ESTADO`) |
+| GET | `/static_catalog/estado/{idEstado}` | One state by id |
+| GET | `/static_catalog/tipo_afiliacion` | Affiliation types (`C_TIPOAFILIACION`) as `TipoAfiliacion` DTOs |
+| GET | `/static_catalog/tipo_datocontacto` | Contact-data types (`C_TIPODATOCONTACTO`) as `TipoDatoContacto` DTOs |
+
+`UserinfoService` can resolve an email from a bearer token via Cognito `userinfo_endpoint`. It is not wired into controllers yet.
+
+## Persistence
+
+- All database definitions live in `./db` (schema SQL, catalog seed SQL, Workbench model, Docker Compose).
+- Hibernate `PhysicalNamingStrategyStandardImpl` — `@Column` / `@Table` names are taken literally (uppercase, no snake_case conversion). Match the MySQL identifiers.
+- Schema is **not** auto-created (`spring.jpa.hibernate.ddl-auto` is unset). Apply `db/db_register.sql` to the MySQL from Compose.
+- Catalog seeds: `db/C_TIPOIMAGENDOCUMENTO_*.sql`, `db/C_ESTADO_*.sql`, `db/C_TIPOAFILIACION_*.sql`, `db/C_TIPODATOCONTACTO_*.sql`. Workbench model: `db/BDAFILIACION.mwb`.
+- Table naming: `C_*` catalogs, `T_*` transactional. Schema name `db_register`.
+- Mapped entities: `T_PERSONA`, `T_DOMICILIO`, `T_IMAGEN`, `T_AFILIACION`, `T_ASPIRANTE`, `T_AFICIONADO`, `T_DATOCONTACTO`, `C_TIPOIMAGENDOCUMENTO`, `C_ESTADO`, `C_TIPODATOCONTACTO`, `C_TIPOAFILIACION`. View: `V_ELEGIBLE_IDBADGE` (mapped as `ElegibleIdBadgeEntity`, read-only).
+- `T_RADIOAFICIONADO` was replaced by `T_AFICIONADO`, which links `T_PERSONA` and an optional `T_IMAGEN` (`IDIMAGEN` is `NULL`-able; a new capture may instead send only a file `uuid` and the component creates the CERTIFICADO imagen row). Its `FECHAFIN` was changed from `VARCHAR(45)` to `DATE` and `MODIFIED_AT DATETIME NOT NULL` was added in `db_register.sql`.
+- `T_AFILIACION` requires `IDPERSONA`, `IDESTADO`, and `IDTIPOAFILIACION` (FK to `C_TIPOAFILIACION`, seeded 1–3: AFICIONADO / ASPIRANTE / EXTRANJERO). `idTipoAfiliacion` is exposed on the `Afiliacion` DTO and mapped via nested `@Mapping` both directions. `T_ASPIRANTE` requires `IDPERSONA` and `IDESTADO` plus `CONTADORESTADO`; both ids are exposed on the `Aspirante` DTO via nested `@Mapping`. `T_AFICIONADO` ids (`idPersona`, `idImagen`) are exposed the same way on the `Aficionado` DTO.
+- IDs: `T_PERSONA` / `T_DOMICILIO` / `T_IMAGEN` / `T_AFILIACION` / `T_ASPIRANTE` / `T_AFICIONADO` / `T_DATOCONTACTO` use `IDENTITY`. `C_TIPOIMAGENDOCUMENTO` PK is not auto-increment in SQL; the entity currently uses `GenerationType.TABLE`. `C_ESTADO`, `C_TIPOAFILIACION`, and `C_TIPODATOCONTACTO` PKs are not auto-increment in SQL (seed-only catalogs — do not insert from the app); the mapped `C_ESTADO` / `C_TIPODATOCONTACTO` / `C_TIPOAFILIACION` entities use `GenerationType.IDENTITY`.
+- `C_TIPODATOCONTACTO` is `INT` PK + `TIPOCONTACTO` / `DESCRIPCION` (seeded EMAIL / MOVIL / FIJO); `T_DATOCONTACTO.IDTIPODATOCONTACTO` is now `INT` referencing it.
+- `T_IMAGEN` links optionally to `T_PERSONA` and/or `T_AFILIACION`, plus required `C_TIPOIMAGENDOCUMENTO`. File bytes live on disk keyed by `UUID`, not in the row.
+- `T_AFILIACION` requires `IDPERSONA` and `IDESTADO` (and `IDTIPOAFILIACION` in SQL). `VITALICIA` / `DELETED` are `TINYINT`. `MODIFIED_AT` is set in `@PrePersist` / `@PreUpdate` on both `T_AFILIACION` and `T_AFICIONADO`.
+
+## Afiliación rules
+
+`AfiliacionServiceImpl` runs `AfiliacionValidatorComponent` before save. Failures become `AfiliacionServiceException` (controller maps to HTTP 500 with the message body).
+
+- `fechaInicio` is required.
+- `fechaFin` may be null only when `vitalicia` is true; otherwise `fechaInicio` must be strictly before `fechaFin`.
+- A person may not have a second non-deleted vitalicia.
+- New/edited dates must not sit before existing non-deleted afiliación start/end dates (excluding the row being edited).
+- Edits are rejected more than 5 days after `MODIFIED_AT`.
+
+Keep those checks in the component; do not copy them into the controller.
+
+## Aficionado rules
+
+`AficionadoServiceImpl` delegates to `AficionadoComponent` before save/delete. Failures become `AficionadoServiceException` (HTTP 500 with message body).
+
+- `fechaInicio` is required; if `fechaFin` is set it must be strictly after `fechaInicio`.
+- A persona may not open a second register while one is vigente (`fechaFin` null).
+- New/edited dates must not sit before the `fechaInicio` of another vigente aficionado (excluding the row being edited).
+- Edits are rejected more than 5 days after `MODIFIED_AT`.
+- Delete is a soft close (`fechaFin` = today) and is rejected if the row already has a `fechaFin`.
+- New capture with no `idImagen` but with `uuid`: the component creates a `T_IMAGEN` of type `StaticValues.CERTIFICADO` linked to the persona.
+
+## Mapper conventions
+
+Prefer MapStruct for new mappings.
+
+- **MapStruct**: interfaces in `mapper/to_dto` or `mapper/to_entity` (exceptions: `EstadoMapper` and `TipoAfiliacionEntityMapper` live in `mapper/` next to the legacy persona mapper). `INSTANCE = Mappers.getMapper(...)`, `@Mapping` for nested ids (e.g. `persona.idPersona` ↔ `idPersona`, `estado.idEstado` ↔ `idEstado`, `tipoAfiliacion.idTipoAfiliacion` ↔ `idTipoAfiliacion`). After editing a mapper interface, run `./mvnw compile` to regenerate `*Impl` under `target/generated-sources/annotations`.
+- **Manual** (legacy): `PersonaMapper` abstract class with static methods. Do not extend this style.
+
+`maven-compiler-plugin` `annotationProcessorPaths` lists **lombok then** `mapstruct-processor`. Keep that order. If you add processors, include Lombok as well (`lombok` before `mapstruct-processor`) or Maven compile will skip Lombok.
+
+## Code conventions
+
+- Constructor injection via Lombok `@RequiredArgsConstructor` / `@AllArgsConstructor` on services and controllers.
+- DTOs stay out of the JPA package. API records (`TipoImagen`, `UploadResult`) are fine for read-only / simple payloads.
+- Domain names and DB columns are Spanish (`primerApellido`, `entidadFederativa`, `fecNac`, `idEstado`). Keep that vocabulary; do not rename to English. `estado` here is a Mexican federative entity (`C_ESTADO`), not a workflow status.
+- Image-type groups live in `StaticValues` (`FOR_PERSONA` / `FOR_AFILIACION` and the `PERSONAL_FOTO`…`SOLICITUD` ids). Reuse those constants; do not scatter magic numbers.
+- Listing goes through `PersonaRepository.searchByTerm` and `DatatableServiceImpl`.
+- `dto/AfiliacionError.java.txt` is a disabled draft — it does not compile; do not treat it as a live DTO.
+- Tests live under `src/test/java/mx/egd/fmre/register` and use the Boot 4 modular starters `spring-boot-starter-data-jpa-test` and `spring-boot-starter-webmvc-test` (no `spring-boot-starter-test`). There is no testcontainers / security test setup yet; `RegisterApplicationTests` needs a running MySQL and a valid `.env`.

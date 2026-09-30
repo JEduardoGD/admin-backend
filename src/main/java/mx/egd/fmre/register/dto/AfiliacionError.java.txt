@@ -1,0 +1,14 @@
+package mx.egd.fmre.register.dto;
+
+import java.io.Serializable;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class AfiliacionError implements Serializable {
+    private static final long serialVersionUID = 1316561348702065040L;
+    private boolean error;
+    private String errorText;
+}
