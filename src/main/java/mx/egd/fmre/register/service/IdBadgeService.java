@@ -6,7 +6,7 @@ public interface IdBadgeService {
 
     byte[] createIdBadgeService(Integer idPersona) throws IdBadgeServiceException;
 
-    boolean sendIdBadge(Integer idPersona) throws IdBadgeServiceException;
+    boolean sendIdBadge(Integer idPersona, String token) throws IdBadgeServiceException;
 
 	String createIdBadgdFileName(Integer idPersona) throws IdBadgeServiceException;
 

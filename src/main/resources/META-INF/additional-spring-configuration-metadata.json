@@ -18,5 +18,30 @@
     "name": "postalia.api",
     "type": "java.lang.String",
     "description": "A description for 'postalia.api'"
+  },
+  {
+    "name": "mail.bcc",
+    "type": "java.lang.String",
+    "description": "A description for 'mail.bcc'"
+  },
+  {
+    "name": "mail.from",
+    "type": "java.lang.String",
+    "description": "A description for 'mail.from'"
+  },
+  {
+    "name": "mail.subject",
+    "type": "java.lang.String",
+    "description": "A description for 'mail.subject'"
+  },
+  {
+    "name": "mail.smtp_properties",
+    "type": "java.lang.String",
+    "description": "A description for 'mail.smtp_properties'"
+  },
+  {
+    "name": "enpoint.open",
+    "type": "java.lang.String",
+    "description": "A description for 'enpoint.open'"
   }
 ]}
