@@ -53,3 +53,4 @@ public class UserinfoServiceImpl implements UserinfoService {
         return userInfo.email();
     }
 }
+
