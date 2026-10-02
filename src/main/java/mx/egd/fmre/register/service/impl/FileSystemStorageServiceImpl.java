@@ -18,12 +18,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import mx.egd.fmre.register.exception.FileSystemStorageServiceException;
 import mx.egd.fmre.register.service.FileSystemStorageService;
 import mx.egd.fmre.register.util.FileInputUtil;
 import mx.egd.fmre.register.util.exception.FileInputUtilException;
 
 @Service
+@Slf4j
 public class FileSystemStorageServiceImpl extends FileInputUtil implements FileSystemStorageService {
     
     private static final String FAILED_TO_STORE_EMPTY_FILE = "Failed to store empty file.";
@@ -117,29 +119,32 @@ public class FileSystemStorageServiceImpl extends FileInputUtil implements FileS
             if (resource.exists() || resource.isReadable()) {
                 return resource;
             } else {
+                log.error("No se puede leer {} en {}", filename, this.rootLocation);
                 throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + filename);
 
             }
         } catch (MalformedURLException e) {
+            log.error("No se puede leer {} en {}: {}", filename, this.rootLocation, e.getMessage());
             throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + filename, e);
         }
     }
 
     @Override
-    public Resource loadAsResourceByUuid(String uuid) throws FileSystemStorageServiceException {
+    public Resource loadAsResourceByUuid(String filename) throws FileSystemStorageServiceException {
         String uuidPart;
         try {
-            uuidPart = extractUuidPart(uuid);
+            uuidPart = extractUuidPart(filename);
         } catch (FileInputUtilException e) {
             throw new FileSystemStorageServiceException(e);
         }
         Path rootLocationPath = Paths.get(this.rootLocation).toAbsolutePath().normalize();
 
-        Path requested = rootLocationPath.resolve(uuid).normalize().toAbsolutePath();
+        Path requested = rootLocationPath.resolve(filename).normalize().toAbsolutePath();
         if (requested.getParent().equals(rootLocationPath) && isReadableFile(requested)) {
             try {
-                return toUrlResource(requested, uuid);
+                return toUrlResource(requested, filename);
             } catch (FileInputUtilException e) {
+                log.error("No se puede leer {} de {}", filename, rootLocationPath);
                 throw new FileSystemStorageServiceException(e);
             }
         }
@@ -161,9 +166,9 @@ public class FileSystemStorageServiceImpl extends FileInputUtil implements FileS
                 }
             }
         } catch (IOException | FileInputUtilException e) {
-            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + uuid, e);
+            throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + filename, e);
         }
 
-        throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + uuid);
+        throw new FileSystemStorageServiceException(CULD_NOT_READ_FILE + filename);
     }
 }

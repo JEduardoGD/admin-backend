@@ -1,14 +1,15 @@
 package mx.egd.fmre.register.component.impl;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ResourceUtils;
+import org.springframework.util.StreamUtils;
 
 import com.itextpdf.barcodes.BarcodeQRCode;
 import com.itextpdf.io.font.PdfEncodings;
@@ -44,6 +45,7 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
     //private ImageData iaruImageData;
     private ImageData plecaData;
     private ImageData anversoMarcaAguaImageData;
+    private final ResourceLoader resourceLoader;
 
     DateTimeFormatter formatter;
     
@@ -62,8 +64,12 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
     
     private PdfFont loadFont(String path) throws IdBadgeComponentException {
         try {
-            File file = ResourceUtils.getFile(String.format("classpath:%s", path));
-            return PdfFontFactory.createFont(file.getAbsolutePath(), PdfEncodings.IDENTITY_H);
+            Resource resource = resourceLoader.getResource(String.format("classpath:%s", path));
+            byte[] fontBytes;
+            try (InputStream inputStream = resource.getInputStream()) {
+                fontBytes = StreamUtils.copyToByteArray(inputStream);
+            }
+            return PdfFontFactory.createFont(fontBytes, PdfEncodings.IDENTITY_H);
         } catch (IOException e) {
             log.error(e.getMessage());
             throw new IdBadgeComponentException(e);
