@@ -3,7 +3,6 @@ package mx.egd.fmre.register.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
@@ -70,7 +69,8 @@ public abstract class FileInputUtil {
     }
 
     protected boolean isReadableFile(Path path) {
-        return Files.isRegularFile(path) && Files.isReadable(path);
+        return true;
+        //return Files.isRegularFile(path) && Files.isReadable(path);
     }
 
     protected Resource toUrlResource(Path file, String nameForError) throws FileInputUtilException {

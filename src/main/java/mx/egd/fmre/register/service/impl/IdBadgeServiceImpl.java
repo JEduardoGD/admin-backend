@@ -266,7 +266,7 @@ public class IdBadgeServiceImpl implements IdBadgeService {
         try {
             imagenFotoPersonalByteArray = imagenService.get(imagenFotoPersonal.getUuid());
         } catch (ServiceException e) {
-            log.error(e.getMessage());
+            
             throw new IdBadgeServiceException(e.getMessage());
         }
         
