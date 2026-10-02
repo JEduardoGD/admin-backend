@@ -4,6 +4,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,10 +56,12 @@ public class CredencialController {
     }
     
 	@GetMapping(path = "send_idbadge/{idPersona}")
-	public ResponseEntity<SendIdbadgeResponse> sendIdBadge(@PathVariable Integer idPersona) {
+	public ResponseEntity<SendIdbadgeResponse> sendIdBadge(
+	        @AuthenticationPrincipal Jwt jwt,
+	        @PathVariable Integer idPersona) {
 		String errorMsg = "";
 		try {
-			if (idBadgeService.sendIdBadge(idPersona)) {
+            if (idBadgeService.sendIdBadge(idPersona, jwt != null ? jwt.getTokenValue() : null)) {
 				return new ResponseEntity<SendIdbadgeResponse>(new SendIdbadgeResponse(false, "OK"), HttpStatus.OK);
 			}
 		} catch (IdBadgeServiceException e) {
