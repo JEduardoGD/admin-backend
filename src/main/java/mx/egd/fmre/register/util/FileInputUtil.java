@@ -16,7 +16,7 @@ import mx.egd.fmre.register.util.exception.FileInputUtilException;
 import mx.egd.fmre.register.util.exception.MimeTypesUtilException;
 
 public abstract class FileInputUtil {
-    
+
     private static final String CULD_NOT_READ_FILE = "Could not read file: ";
 
     private static final Tika TIKA = new Tika();

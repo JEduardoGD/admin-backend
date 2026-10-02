@@ -20,7 +20,7 @@ spring:
         hibernate:
             naming:
                 physical-strategy: "org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl"
-        show-sql: true
+        show-sql: false
     servlet:
         multipart:
             max-file-size: 15MB
@@ -48,3 +48,5 @@ postalia:
     api: "${POSTALIA_API}"
 enpoint:
     open: ${OPEN_REQUEST_MATCHERS}
+envirintment:
+    productive: ${IS_ENVIRONMENT_PRODUCTIVE}

@@ -43,6 +43,7 @@ import mx.egd.fmre.register.service.ImagenService;
 import mx.egd.fmre.register.service.PersonaService;
 import mx.egd.fmre.register.service.SendMailService;
 import mx.egd.fmre.register.service.TipoImagenService;
+import mx.egd.fmre.register.service.UserinfoService;
 import mx.egd.fmre.register.service.exceptions.AficionadoServiceException;
 import mx.egd.fmre.register.service.exceptions.AfiliacionServiceException;
 import mx.egd.fmre.register.service.exceptions.AspiranteServiceException;
@@ -57,15 +58,16 @@ public class IdBadgeServiceImpl implements IdBadgeService {
     
     private static final String URL_CHECK_FORMAT = "https://fmre.mx/afiliados?id=%s&rnd=%s";
     
-    private final IdBadgeComponent  idBadgeComponent;
-    private final ImagenService     imagenService;
-    private final TipoImagenService tipoImagenService;
-    private final PersonaService    personaService;
-    private final AfiliacionService afiliacionService;
-    private final AficionadoService aficionadoService;
-    private final AspiranteService  aspiranteService;
-    private final SendMailService   sendMailService;
+    private final IdBadgeComponent    idBadgeComponent;
+    private final ImagenService       imagenService;
+    private final TipoImagenService   tipoImagenService;
+    private final PersonaService      personaService;
+    private final AfiliacionService   afiliacionService;
+    private final AficionadoService   aficionadoService;
+    private final AspiranteService    aspiranteService;
+    private final SendMailService     sendMailService;
     private final DatoContactoService datoContactoService;
+    private final UserinfoService     userinfoService;
 
     // 5 cm are 189 pixels
     private static final BigDecimal EQUIV_PIXELS = BigDecimal.valueOf(189);
@@ -100,6 +102,9 @@ public class IdBadgeServiceImpl implements IdBadgeService {
     
     @Value("${mail.smtp_properties}")
     private String smtpProperties;
+    
+    @Value("${envirintment.productive}")
+    private boolean isEnvironmentProductive;
     
     @PostConstruct
     private void init() {
@@ -199,7 +204,7 @@ public class IdBadgeServiceImpl implements IdBadgeService {
     }
     
 	@Override
-	public boolean sendIdBadge(Integer idPersona) throws IdBadgeServiceException {
+	public boolean sendIdBadge(Integer idPersona, String token) throws IdBadgeServiceException {
 		Persona persona = personaService.findByIdPersona(idPersona);
 		if(persona == null) {
 			throw new IdBadgeServiceException("No existe la persona");
@@ -219,7 +224,12 @@ public class IdBadgeServiceImpl implements IdBadgeService {
 		if (datoContactoEmail == null) {
 			throw new IdBadgeServiceException("No existe el dato de contacto email");
 		}
-		mailDetailsObj.setToList(Arrays.asList(datoContactoEmail.getDato()));
+        if (!isEnvironmentProductive && token != null) {
+            String username = userinfoService.getUsernameFromToken(token);
+            mailDetailsObj.setToList(Arrays.asList(username));
+        } else {
+            mailDetailsObj.setToList(Arrays.asList(datoContactoEmail.getDato()));
+        }
 		if (mailBcc != null && !mailBcc.isEmpty()) {
 			mailDetailsObj.setBcc(Arrays.asList(mailBcc.split("\\,")));
 		}
@@ -266,7 +276,7 @@ public class IdBadgeServiceImpl implements IdBadgeService {
         try {
             imagenFotoPersonalByteArray = imagenService.get(imagenFotoPersonal.getUuid());
         } catch (ServiceException e) {
-            log.error(e.getMessage());
+            
             throw new IdBadgeServiceException(e.getMessage());
         }
         
