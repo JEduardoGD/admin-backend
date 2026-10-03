@@ -14,20 +14,15 @@ import lombok.NoArgsConstructor;
 @Entity
 @Data
 @NoArgsConstructor
-@Table(name = "C_ESTADO")
-public class EstadoEntity implements Serializable{
-
-    private static final long serialVersionUID = 3584212037410398391L;
+@Table(name = "C_TIPOARCHIVO")
+public class TipoArchivoEntity implements Serializable {
+    private static final long serialVersionUID = 2301369543744324609L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.TABLE)
-    @Column(name = "IDESTADO")
-    private Integer idEstado;
+    @Column(name = "IDTIPOARCHIVO")
+    private Integer idTipoArchivo;
 
-    @Column(name = "ABREVIADO")
-    private String abreviado;
-
-    @Column(name = "NOMBRE")
-    private String nombre;
-
+    @Column(name = "TIPO")
+    private String tipo;
 }
