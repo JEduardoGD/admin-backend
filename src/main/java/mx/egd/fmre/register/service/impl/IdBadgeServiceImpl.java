@@ -184,6 +184,8 @@ public class IdBadgeServiceImpl implements IdBadgeService {
             
             idBadgeComponent.addSociedadIaru(document);
             
+            idBadgeComponent.adddSinaproc(document);
+            
             idBadgeComponent.addIndivativoBack(document, indicativo);
         } catch (IdBadgeComponentException e) {
             log.error(e.getMessage());
