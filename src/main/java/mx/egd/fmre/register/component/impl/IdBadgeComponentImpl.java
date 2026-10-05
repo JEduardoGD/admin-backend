@@ -316,7 +316,21 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
                 //.setFontColor(ColorConstants.RED)
                 .setFixedLeading(17)
                 .setMultipliedLeading(1f)
-                .setFixedPosition(23, 30, 165);
+                .setFixedPosition(23, 50, 165);
+        p.setTextAlignment(TextAlignment.CENTER);
+        document.add(p);
+    }
+    
+    @Override
+    public void adddSinaproc(Document document) throws IdBadgeComponentException {
+        PdfFont pdfFont = loadFont(ARIAL_ROUNDED_MT_REGULAR_FONT_FILE);
+        Paragraph p = new Paragraph(TEXTO_SINAPROC)
+                .setFont(pdfFont)
+                .setFontSize(10)
+                //.setFontColor(ColorConstants.RED)
+                .setFixedLeading(17)
+                .setMultipliedLeading(1f)
+                .setFixedPosition(23, 15, 165);
         p.setTextAlignment(TextAlignment.CENTER);
         document.add(p);
     }
@@ -328,7 +342,7 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
                 .setFont(pdfFont)
                 .setFontSize(18)
                 .setFontColor(ColorConstants.RED)
-                .setFixedPosition(30, 70, 150);
+                .setFixedPosition(30, 90, 150);
         p.setTextAlignment(TextAlignment.CENTER);
         document.add(p);
     }

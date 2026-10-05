@@ -19,6 +19,7 @@ public abstract class IdBadgeComponentStaticValues {
     protected static final String TEXTO_APOYO = "Se solicita a las autoridades CIVILES y MILITARES todo el apoyo que puedan brindar para  el óptimo desempeño de sus funciones";
     protected static final String TEXTO_AFILIACION_FMRE = "Afiliación FMRE.";
     protected static final String TEXTO_SOCIEDAD_IARU = "Sociedad miembro de IARU Internacional Amateur Radio Union";
+    protected static final String TEXTO_SINAPROC = "Miembro del Sistema Nacional de Protección Civil";
     protected static final String TEXTO_SPACE = " ";
     protected static final String MIEMBRO_ACTIVO = "Miembro Activo";
 
