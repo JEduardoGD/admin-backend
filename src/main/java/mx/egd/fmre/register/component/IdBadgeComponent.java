@@ -40,6 +40,8 @@ public interface IdBadgeComponent {
 
     void addSociedadIaru(Document document) throws IdBadgeComponentException;
 
+    void adddSinaproc(Document document) throws IdBadgeComponentException;
+
     void addIndivativoBack(Document document, String indicativo) throws IdBadgeComponentException;
 
     void addBaseImagen(Document document);

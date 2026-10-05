@@ -31,7 +31,7 @@ public class ArchivoServiceImpl implements ArchivoService {
 
     @Override
     public List<ArchivoDto> findByIdPersonaAndIdAfiliacion(Integer idPersona, Integer idAfiliacion) {
-        if (idPersona != null && idAfiliacion != null) {
+        if (idPersona == null || idAfiliacion == null) {
             return null;
         }
         PersonaEntity personaEntity = new PersonaEntity();
