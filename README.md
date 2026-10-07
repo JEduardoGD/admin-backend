@@ -36,10 +36,10 @@ Copy `db/.env.example` to `db/.env` and set the FTP connection and file backup p
 ```bash
 FTP_HOST='ftp.example.com'
 FTP_PORT='21'
-FTP_USER='your_ftp_user'
-FTP_PASSWORD='your_ftp_password'
-FTP_BACKUP_SOURCE_DIR='/home/geduardo/adminstracion files/upload files'
-FTP_BACKUP_REMOTE_DIR='/xe1jeg/filebackup/fmreadmin_dev'
+FTP_USER=''
+FTP_PASSWORD=''
+FTP_BACKUP_SOURCE_DIR='/route/to/your/local/path/to/backup'
+FTP_BACKUP_REMOTE_DIR='/remote/path/destination/to/your/files'
 ```
 
 Run `bash db/backup_files_ftp.sh` from the repository root (or use its absolute path from any directory; requires `curl`). Each run uploads regular files directly in `FTP_BACKUP_SOURCE_DIR`, including hidden files, via explicit FTPS to `FTP_BACKUP_REMOTE_DIR/YYMMDD_hhmmss` on the FTP server. Local subdirectories and symlinks are skipped. Use `-s SOURCE_DIR` and `-r REMOTE_DIR` to override the paths for a single run; `-h` shows usage. An empty or missing source directory and upload errors cause a nonzero exit status.
