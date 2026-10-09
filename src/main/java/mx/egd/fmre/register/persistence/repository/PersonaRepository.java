@@ -3,7 +3,6 @@ package mx.egd.fmre.register.persistence.repository;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -28,14 +27,4 @@ public interface PersonaRepository extends JpaRepository<PersonaEntity, Integer>
             UPPER(p.primerApellido) = UPPER(?2)
              """)
     List<PersonaEntity> findByNombreAndPrimerApellido(String nombre, String primerApellido);
-    
-    @Query("""
-            SELECT p
-            FROM PersonaEntity p 
-            WHERE
-                 p.nombre LIKE %:term% OR
-                 p.primerApellido LIKE %:term% OR
-                 p.segundoApellido LIKE %:term%
-            """)
-    List<PersonaEntity> searchByTerm(String term, Pageable pageable);
 }
