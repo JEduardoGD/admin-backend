@@ -167,6 +167,10 @@ public class IdBadgeServiceImpl implements IdBadgeService {
             
             idBadgeComponent.addTipoAfiliacion(document, tipoAfiliacion);
             
+            if (!isEnvironmentProductive) {
+                idBadgeComponent.addDatosPrueba(document);
+            }
+            
             pdf.addNewPage(customPageSize);
             document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
             
@@ -187,6 +191,10 @@ public class IdBadgeServiceImpl implements IdBadgeService {
             idBadgeComponent.adddSinaproc(document);
             
             idBadgeComponent.addIndivativoBack(document, indicativo);
+            
+            if (!isEnvironmentProductive) {
+                idBadgeComponent.addDatosPrueba(document);
+            }
         } catch (IdBadgeComponentException e) {
             log.error(e.getMessage());
             throw new IdBadgeServiceException(e);

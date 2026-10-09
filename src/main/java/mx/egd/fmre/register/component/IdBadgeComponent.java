@@ -26,6 +26,8 @@ public interface IdBadgeComponent {
 
     void addIndicativo(Document document, String indicativo) throws IdBadgeComponentException;
 
+    void addDatosPrueba(Document document) throws IdBadgeComponentException;
+
     void addTipoAfiliacion(Document document, String tipoAfiliacion) throws IdBadgeComponentException;
 
     void addApoyoText(Document document) throws IdBadgeComponentException;
