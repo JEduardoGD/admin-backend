@@ -18,4 +18,6 @@ public interface AficionadoService {
 
     Aficionado delete(Integer idAficionado) throws AficionadoServiceException;
 
+    List<Aficionado> findByCallsingLike(String callsign) throws AficionadoServiceException;
+
 }

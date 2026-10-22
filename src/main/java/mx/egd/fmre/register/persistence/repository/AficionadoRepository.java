@@ -9,4 +9,6 @@ import mx.egd.fmre.register.persistence.entity.PersonaEntity;
 
 public interface AficionadoRepository extends JpaRepository<AficionadoEntity, Integer> {
     public List<AficionadoEntity> findByPersona(PersonaEntity personaEntity);
+
+    public List<AficionadoEntity> findByIndicativoContaining(String indicativo);
 }

@@ -46,6 +46,8 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
     private ImageData plecaData;
     private ImageData anversoMarcaAguaImageData;
     private final ResourceLoader resourceLoader;
+    
+    private static final String TEXT_DATOS_PRUEBA = "PRUEBA - NO VÁLIDO";
 
     DateTimeFormatter formatter;
     
@@ -214,6 +216,26 @@ public class IdBadgeComponentImpl extends IdBadgeComponentStaticValues implement
         pOutline.setTextAlignment(TextAlignment.LEFT);
         document.add(pOutline);
     }
+    
+    @Override
+    public void addDatosPrueba(Document document) throws IdBadgeComponentException {
+        double rotationAngle = Math.PI / 4;
+        int fontSize = 27;
+        int posX = 40;
+        int posY = 50;
+        int width = 350;
+        
+        PdfFont pdfFontB = loadFont(AVITIA_OUTLINE_BLACK_FONT_FILE);
+        Paragraph pOutline = new Paragraph(TEXT_DATOS_PRUEBA)
+                .setFont(pdfFontB)
+                .setFontSize(fontSize)
+                .setFontColor(ColorConstants.BLACK)
+                .setFixedPosition(posX, posY, width)
+                .setRotationAngle(rotationAngle);
+        pOutline.setTextAlignment(TextAlignment.LEFT);
+        document.add(pOutline);
+    }
+    
     
     @Override
     public void addTipoAfiliacion(Document document, String tipoAfiliacion) throws IdBadgeComponentException {

@@ -12,9 +12,9 @@ import lombok.RequiredArgsConstructor;
 import mx.egd.fmre.register.dto.datatable.DataTableResponse;
 import mx.egd.fmre.register.dto.datatable.DatatableObj;
 import mx.egd.fmre.register.dto.datatable.QueryObj;
+import mx.egd.fmre.register.persistence.entity.BusquedaEntity;
 import mx.egd.fmre.register.persistence.entity.ElegibleIdBadgeEntity;
-import mx.egd.fmre.register.persistence.entity.PersonaEntity;
-import mx.egd.fmre.register.persistence.repository.PersonaRepository;
+import mx.egd.fmre.register.persistence.repository.BusquedaRepository;
 import mx.egd.fmre.register.service.DatatableService;
 import mx.egd.fmre.register.service.ElegibleIdBadgeService;
 
@@ -22,30 +22,31 @@ import mx.egd.fmre.register.service.ElegibleIdBadgeService;
 @RequiredArgsConstructor
 public class DatatableServiceImpl implements DatatableService {
 
-    private final PersonaRepository personaRepository;
     private final ElegibleIdBadgeService elegibleIdBadgeService;
+    private final BusquedaRepository busquedaRepository;
 
     @Override
     public DataTableResponse get(QueryObj queryObj) {
-        Pageable pageable = PageRequest.of(0, 20 , Sort.by("idPersona").descending());
-        List<PersonaEntity> personaList = personaRepository.searchByTerm(queryObj.search().value(), pageable);
-        return processList(queryObj, personaList);
+        Pageable pageable = PageRequest.of(0, 10 , Sort.by("idPersona").descending());
+        List<BusquedaEntity> busquedaEntityList = busquedaRepository.searchByTerm(queryObj.search().value(), pageable);
+        return processList(queryObj, busquedaEntityList);
     }
 
-    private DataTableResponse processList(QueryObj queryObj, List<PersonaEntity> personaList) {
-        long recordsTotal = personaList.stream().count();
-        long recordsFiltered = personaList.stream().count();
-        List<DatatableObj> data = personaList.stream().map(p -> {
+    private DataTableResponse processList(QueryObj queryObj, List<BusquedaEntity> busquedaEntityList) {
+        long recordsTotal = busquedaEntityList.stream().count();
+        long recordsFiltered = busquedaEntityList.stream().count();
+        List<DatatableObj> data = busquedaEntityList.stream().map(r -> {
             StringBuffer nameSb = new StringBuffer();
-            nameSb.append(p.getNombre()).append(" ").append(p.getPrimerApellido());
-            if (p.getSegundoApellido() != null) {
-                nameSb.append(" ").append(p.getSegundoApellido());
+            nameSb.append(r.getNombre()).append(" ").append(r.getPrimerApellido());
+            if (r.getSegundoApellido() != null) {
+                nameSb.append(" ").append(r.getSegundoApellido());
             }
-
             DatatableObj datatableObj = new DatatableObj();
-            datatableObj.setIdPersona(p.getIdPersona());
+            datatableObj.setIdPersona(r.getIdPersona());
             datatableObj.setName(nameSb.toString());
-            datatableObj.setReadyForCredencial(validateIdBadge(p.getIdPersona()));
+            datatableObj.setReadyForCredencial(validateIdBadge(r.getIdPersona()));
+            datatableObj.setCallsign(r.getIndicativo());
+
             return datatableObj;
         }).collect(Collectors.toList());
 

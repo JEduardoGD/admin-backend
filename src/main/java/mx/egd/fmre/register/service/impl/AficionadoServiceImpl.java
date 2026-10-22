@@ -97,4 +97,13 @@ public class AficionadoServiceImpl implements AficionadoService {
         AficionadoEntity savedAficionadoEntity = aficionadoRepository.save(aficionadoEntity);
         return AficionadoEntityMapper.INSTANCE.map(savedAficionadoEntity);
     }
+
+    @Override
+    public List<Aficionado> findByCallsingLike(String callsign) throws AficionadoServiceException {
+        if(callsign == null || callsign.isBlank()) {
+            return null;
+        }
+        List<AficionadoEntity> aficionadoEntityList = aficionadoRepository.findByIndicativoContaining(callsign);
+        return aficionadoEntityList.stream().map(a -> AficionadoEntityMapper.INSTANCE.map(a)).collect(Collectors.toList());
+    }
 }
